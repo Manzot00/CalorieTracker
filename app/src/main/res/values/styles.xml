@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="AuthButton" parent="Widget.AppCompat.Button">
+        <item name="android:background">@drawable/auth_button_background</item>
+        <item name="android:textColor">@color/button_text</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:gravity">center</item>
+        <item name="android:padding">12dp</item>
+        <item name="android:minHeight">48dp</item>
+    </style>
+    <style name="CustomEditText" parent="Widget.AppCompat.EditText">
+        <item name="android:background">@drawable/edittext_background</item>
+        <item name="android:padding">12dp</item>
+        <item name="android:textColorHint">@color/text_secondary</item><!-- Colore per l'hint -->
+        <item name="android:textColor">"@color/text_primary"</item> <!-- Colore per il testo -->
+        <item name="android:textSize">16sp</item>
+    </style>
+
+</resources>

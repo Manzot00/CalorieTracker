@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Colore per l'elemento selezionato -->
+    <item android:color="@color/text_primary" android:state_checked="true" />
+    <!-- Colore per gli elementi non selezionati -->
+    <item android:color="@color/text_secondary" android:state_checked="false" />
+</selector>

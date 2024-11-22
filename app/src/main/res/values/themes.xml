@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.CalorieTracker" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:fontFamily">@font/lexend</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <!-- Stile predefinito per EditText -->
+        <item name="editTextStyle">@style/CustomEditText</item>
+    </style>
+</resources>
