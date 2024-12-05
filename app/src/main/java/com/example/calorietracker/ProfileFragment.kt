@@ -4,6 +4,7 @@ import android.app.AlertDialog
 import android.content.ContentValues.TAG
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -13,22 +14,36 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
+import android.widget.TextView
 import android.widget.Toast
+import androidx.compose.ui.semantics.text
 import androidx.core.content.ContextCompat
+import androidx.core.content.res.ResourcesCompat
+import androidx.lifecycle.coroutineScope
+import androidx.lifecycle.lifecycleScope
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKeys
+import com.example.calorietracker.api.RetrofitClient
 import com.example.calorietracker.auth.LoginActivity
 import com.example.calorietracker.databinding.FragmentProfileBinding
 import com.example.calorietracker.models.DailyGoals
+import com.example.calorietracker.utils.DataStoreManager
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 
 class ProfileFragment : Fragment() {
 
     private var _binding: FragmentProfileBinding? = null
     private val binding get() = _binding!!
+    private lateinit var sharedPref: SharedPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        sharedPref = requireActivity().getSharedPreferences("daily_goals", Context.MODE_PRIVATE)
     }
 
     override fun onCreateView(
@@ -45,21 +60,10 @@ class ProfileFragment : Fragment() {
 
         setSavedGoals()
 
-        // Listener per salvare i nuovi valori
         binding.saveGoalsBtn.setOnClickListener {
-            val sharedPref = requireContext().getSharedPreferences("daily_goals", Context.MODE_PRIVATE)
-            with(sharedPref.edit()) {
-                putInt("calorie_goal", binding.dailyCalorieGoalEN.text.toString().toInt())
-                putInt("protein_goal", binding.dailyProteinGoalEN.text.toString().toInt())
-                putInt("carb_goal", binding.dailyCarbsGoalEN.text.toString().toInt())
-                putInt("fat_goal", binding.dailyFatsGoalEN.text.toString().toInt())
-                putFloat("water_goal", binding.dailyWaterGoalEN.text.toString().toFloat())
-                apply()
-            }
-            Toast.makeText(requireContext(), "Goals saved", Toast.LENGTH_SHORT).show()
-
-            // Dopo il salvataggio, aggiorna i valori di riferimento e disabilita il pulsante
-            checkGoalsAndSetButtonState()
+                updateDailyGoals()
+                // Dopo il salvataggio, aggiorna i valori di riferimento e disabilita il pulsante
+                checkGoalsAndSetButtonState()
         }
 
         // Aggiungi TextWatcher per monitorare i cambiamenti nei campi di input
@@ -89,6 +93,11 @@ class ProfileFragment : Fragment() {
         setSavedGoals()
     }
 
+    // Helper function to check for valid data in DailyGoals
+    private fun DailyGoals.hasValidData(): Boolean {
+        return calorieGoal != -1 && proteinGoal != -1 && carbGoal != -1 && fatGoal != -1 && waterGoal != -1.0
+    }
+
     private fun setSavedGoals(){
         val dailyGoals = getDailyGoals()
 
@@ -103,36 +112,174 @@ class ProfileFragment : Fragment() {
         binding.saveGoalsBtn.isEnabled = false
     }
 
+    private var isFetchingFromAPI = false
+
     // Funzione per recuperare i valori dei goal giornalieri
     private fun getDailyGoals(): DailyGoals {
-        val sharedPref = requireContext().getSharedPreferences("daily_goals", Context.MODE_PRIVATE)
+        if (sharedPref.contains("calorie_goal") &&
+            sharedPref.contains("protein_goal") &&
+            sharedPref.contains("carb_goal") &&
+            sharedPref.contains("fat_goal") &&
+            sharedPref.contains("water_goal")
+        ) {
+            return DailyGoals(
+                sharedPref.getInt("calorie_goal", -1),
+                sharedPref.getInt("protein_goal", -1),
+                sharedPref.getInt("carb_goal", -1),
+                sharedPref.getInt("fat_goal", -1),
+                sharedPref.getFloat("water_goal", -1.0f).toDouble()
+            )
+        } else {
+            // Return default values immediately
+            if (!isFetchingFromAPI) {
+                isFetchingFromAPI = true
+                getDailyGoalsFromAPI(sharedPref)
+            }
+            return DailyGoals() // Return default values to display the screen quickly
+        }
+    }
 
-        val calorieGoal = sharedPref.getInt("calorie_goal", 0)
-        val proteinGoal = sharedPref.getInt("protein_goal", 0)
-        val carbGoal = sharedPref.getInt("carb_goal", 0)
-        val fatGoal = sharedPref.getInt("fat_goal", 0)
-        val waterGoal = sharedPref.getFloat("water_goal", 0f)
+    private fun getDailyGoalsFromAPI(sharedPreferences: SharedPreferences) {
+        lifecycleScope.launch {
+            try {
+                isFetchingFromAPI = true
+                val user = FirebaseAuth.getInstance().currentUser
+                val token = user?.getIdToken(false)?.await()?.token
+                val userId = user?.uid
 
-        return DailyGoals(
-            calorieGoal = calorieGoal,
-            proteinGoal = proteinGoal,
-            carbGoal = carbGoal,
-            fatGoal = fatGoal,
-            waterGoal = waterGoal
-        )
+                val response = RetrofitClient.myAPIService.getDailyGoals(userId!!, "Bearer $token")
+                when (response.code()) {
+                    200, 201 -> {
+                        val dailyGoals = response.body()
+                        if (dailyGoals != null) {
+                            sharedPreferences.edit().apply {
+                                putInt("calorie_goal", dailyGoals.calorieGoal)
+                                putInt("protein_goal", dailyGoals.proteinGoal)
+                                putInt("carb_goal", dailyGoals.carbGoal)
+                                putInt("fat_goal", dailyGoals.fatGoal)
+                                putFloat("water_goal", dailyGoals.waterGoal.toFloat())
+                                apply()
+                            }
+                            withContext(Dispatchers.Main) {
+                                binding.dailyCalorieGoalEN.setText(dailyGoals.calorieGoal.toString())
+                                binding.dailyProteinGoalEN.setText(dailyGoals.proteinGoal.toString())
+                                binding.dailyCarbsGoalEN.setText(dailyGoals.carbGoal.toString())
+                                binding.dailyFatsGoalEN.setText(dailyGoals.fatGoal.toString())
+                                binding.dailyWaterGoalEN.setText(dailyGoals.waterGoal.toString())
+                            }
+                            isFetchingFromAPI = false
+                        }
+                    }
+                    401 -> {
+                        Log.e(TAG, "Unauthorized request: ${response.errorBody()?.string()}")
+                        Toast.makeText(requireContext(), "Unauthorized request", Toast.LENGTH_SHORT).show()
+                    }
+                    403 -> {
+                        Log.e(TAG, "Forbidden request: ${response.errorBody()?.string()}")
+                        Toast.makeText(requireContext(), "Forbidden request", Toast.LENGTH_SHORT).show()
+                    }
+                    500 -> {
+                        Log.e(TAG, "Internal server error: ${response.errorBody()?.string()}")
+                        Toast.makeText(requireContext(), "Internal server error", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error fetching daily goals: ${e.message}")
+                Toast.makeText(requireContext(), "Error fetching daily goals", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun updateDailyGoals() {
+        //Local update
+        sharedPref.edit().apply {
+            putInt("calorie_goal", binding.dailyCalorieGoalEN.text.toString().toInt())
+            putInt("protein_goal", binding.dailyProteinGoalEN.text.toString().toInt())
+            putInt("carb_goal", binding.dailyCarbsGoalEN.text.toString().toInt())
+            putInt("fat_goal", binding.dailyFatsGoalEN.text.toString().toInt())
+            putFloat("water_goal", binding.dailyWaterGoalEN.text.toString().toFloat())
+            apply()
+        }
+        lifecycle.coroutineScope.launch {
+            try {
+                //Remote update
+                val user = FirebaseAuth.getInstance().currentUser
+                val token = user?.getIdToken(false)?.await()?.token
+                val userId = user?.uid
+
+                val dailyGoals = DailyGoals(
+                    binding.dailyCalorieGoalEN.text.toString().toInt(),
+                    binding.dailyProteinGoalEN.text.toString().toInt(),
+                    binding.dailyCarbsGoalEN.text.toString().toInt(),
+                    binding.dailyFatsGoalEN.text.toString().toInt(),
+                    binding.dailyWaterGoalEN.text.toString().toDouble()
+                )
+
+                val response = RetrofitClient.myAPIService.updateDailyGoals(
+                    userId!!,
+                    "Bearer $token",
+                    dailyGoals
+                )
+                when (response.code()) {
+                    200, 201 -> {
+                        Log.d(TAG, "Daily goals updated successfully")
+                        Toast.makeText(requireContext(), "Daily goals updated successfully", Toast.LENGTH_SHORT).show()
+                    }
+
+                    400 -> {
+                        Log.e(TAG, "Bad request: ${response.errorBody()?.string()}")
+                        Toast.makeText(requireContext(), "Bad request", Toast.LENGTH_SHORT).show()
+                    }
+
+                    401 -> {
+                        Log.e(TAG, "Unauthorized request: ${response.errorBody()?.string()}")
+                        Toast.makeText(requireContext(), "Unauthorized request", Toast.LENGTH_SHORT)
+                            .show()
+                    }
+
+                    403 -> {
+                        Log.e(TAG, "Forbidden request: ${response.errorBody()?.string()}")
+                        Toast.makeText(requireContext(), "Forbidden request", Toast.LENGTH_SHORT)
+                            .show()
+                    }
+
+                    500 -> {
+                        Log.e(TAG, "Internal server error: ${response.errorBody()?.string()}")
+                        Toast.makeText(
+                            requireContext(),
+                            "Internal server error",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error updating daily goals: ${e.message}")
+                Toast.makeText(requireContext(), "Error updating daily goals", Toast.LENGTH_SHORT)
+                    .show()
+            }
+        }
     }
 
     // Funzione per verificare se i valori sono cambiati
     private fun checkGoalsAndSetButtonState() {
         val currentGoals = getDailyGoals()
         val enteredGoals = DailyGoals(
-            binding.dailyCalorieGoalEN.text.toString().toIntOrNull() ?: 0,
-            binding.dailyProteinGoalEN.text.toString().toIntOrNull() ?: 0,
-            binding.dailyCarbsGoalEN.text.toString().toIntOrNull() ?: 0,
-            binding.dailyFatsGoalEN.text.toString().toIntOrNull() ?: 0,
-            binding.dailyWaterGoalEN.text.toString().toFloatOrNull() ?: 0f
+            binding.dailyCalorieGoalEN.text.toString().toIntOrNull() ?: -1,
+            binding.dailyProteinGoalEN.text.toString().toIntOrNull() ?: -1,
+            binding.dailyCarbsGoalEN.text.toString().toIntOrNull() ?: -1,
+            binding.dailyFatsGoalEN.text.toString().toIntOrNull() ?: -1,
+            binding.dailyWaterGoalEN.text.toString().toDoubleOrNull() ?: -1.0
         )
-        binding.saveGoalsBtn.isEnabled = currentGoals != enteredGoals
+        // Check if any EditText is empty
+        val isAnyEditTextEmpty = listOf(
+            binding.dailyCalorieGoalEN,
+            binding.dailyProteinGoalEN,
+            binding.dailyCarbsGoalEN,
+            binding.dailyFatsGoalEN,
+            binding.dailyWaterGoalEN
+        ).any { it.text.isEmpty() }
+
+        binding.saveGoalsBtn.isEnabled = currentGoals != enteredGoals && !isAnyEditTextEmpty
     }
 
     // Funzione per aggiungere un TextWatcher generico
@@ -167,13 +314,14 @@ class ProfileFragment : Fragment() {
     // Funzione per mostrare il dialog di conferma per il logout
     private fun showSignOutConfirmationDialog() {
         val builder = AlertDialog.Builder(requireContext())
-        builder.setTitle("Conferm Sign Out")
+        builder.setTitle("SIGN OUT")
         builder.setMessage("Are you sure you want to sign out?")
 
         // Pulsante per confermare il logout
         builder.setPositiveButton("Yes") { _, _ ->
             try {
                 FirebaseAuth.getInstance().signOut()
+                sharedPref.edit().clear().apply()
                 clearUserData()
                 goToLoginActivity()
             } catch (e: Exception) {
@@ -191,6 +339,12 @@ class ProfileFragment : Fragment() {
         // Mostra il dialog
         val alertDialog = builder.create()
         alertDialog.setOnShowListener {
+            alertDialog.window?.setBackgroundDrawableResource(R.drawable.bottom_nav_background)
+
+            val messageTextView = alertDialog.findViewById<TextView>(android.R.id.message)
+            messageTextView?.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_secondary))
+            messageTextView?.typeface = ResourcesCompat.getFont(requireContext(), R.font.lexend)
+
             alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(requireContext(), R.color.enabled_color))
             alertDialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(requireContext(), R.color.auth_button_background))
         }

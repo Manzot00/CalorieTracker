@@ -6,16 +6,19 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.calorietracker.databinding.FragmentHomeBinding
 import com.example.calorietracker.models.MealCategory
+import com.example.calorietracker.models.SharedViewModelMealCategory
 
 
 class HomeFragment : Fragment() {
 
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
+    private val sharedViewModel: SharedViewModelMealCategory by activityViewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,6 +42,7 @@ class HomeFragment : Fragment() {
             MealCategory("Dinner", mutableListOf()),
             MealCategory("Snacks", mutableListOf())
         )
+        sharedViewModel.setMealCategories(mealCategories)
 
         val rv = view.findViewById<RecyclerView>(R.id.mealCategoriesRV)
         rv.layoutManager = LinearLayoutManager(requireContext())

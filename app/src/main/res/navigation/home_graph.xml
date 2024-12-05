@@ -15,4 +15,28 @@
         android:name="com.example.calorietracker.ProfileFragment"
         android:label="fragment_profile"
         tools:layout="@layout/fragment_profile" />
+    <fragment
+        android:id="@+id/searchFragment"
+        android:name="com.example.calorietracker.SearchFragment"
+        android:label="fragment_search"
+        tools:layout="@layout/fragment_search" >
+        <action
+            android:id="@+id/action_searchFragment_to_addFoodFragment"
+            app:destination="@id/addFoodFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/addFoodFragment"
+        android:name="com.example.calorietracker.AddFoodFragment"
+        android:label="fragment_add_food"
+        tools:layout="@layout/fragment_add_food" >
+        <argument
+            android:name="foodId"
+            app:argType="long" />
+        <action
+            android:id="@+id/action_addFoodFragment_to_searchFragment"
+            app:destination="@id/searchFragment" />
+        <action
+            android:id="@+id/action_addFoodFragment_to_homeFragment"
+            app:destination="@id/homeFragment" />
+    </fragment>
 </navigation>

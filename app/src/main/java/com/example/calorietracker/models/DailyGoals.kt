@@ -1,9 +1,9 @@
 package com.example.calorietracker.models
 
 data class DailyGoals(
-    val calorieGoal: Int,
-    val proteinGoal: Int,
-    val carbGoal: Int,
-    val fatGoal: Int,
-    val waterGoal: Float
+    val calorieGoal: Int = -1,
+    val proteinGoal: Int = -1,
+    val carbGoal: Int = -1,
+    val fatGoal: Int = -1,
+    val waterGoal: Double = -1.0
 )

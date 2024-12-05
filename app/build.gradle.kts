@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.gms.google.services)
     id("org.jetbrains.kotlin.kapt")
+    id("androidx.navigation.safeargs.kotlin")
 }
 
 android {
@@ -43,8 +44,17 @@ android {
 }
 
 dependencies {
+    val room_version="2.6.1"
+    implementation(libs.androidx.room.runtime)
+    kapt("androidx.room:room-compiler:$room_version")
+    // Kotlin Extensions and Coroutines support for Room
+    implementation(libs.androidx.room.ktx)
+    // Test helpers
+    testImplementation(libs.androidx.room.testing)
+    implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.security.crypto)
     implementation(libs.converter.gson)
+    implementation(libs.converter.scalars)
     implementation(libs.retrofit)
     implementation(libs.logging.interceptor)
     implementation(libs.com.squareup.moshi.moshi)
@@ -62,6 +72,7 @@ dependencies {
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)
     implementation(libs.firebase.firestore.ktx)
+    implementation(libs.androidx.datastore.core.android)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

@@ -117,6 +117,7 @@ class LoginFragment : Fragment() {
     private suspend fun saveUserData(user: FirebaseUser) {
         // Genero il token di autenticazione, ma non lo salvo. Lo genero per averlo in cache e poterlo usare in seguito
         val token = user.getIdToken(true).await()?.token
+        Log.d(TAG, "Token: $token")
         val username = user.displayName
         val email = user.email
         val userId = user.uid

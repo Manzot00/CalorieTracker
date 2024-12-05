@@ -6,9 +6,10 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
+import retrofit2.converter.scalars.ScalarsConverterFactory
 
 object RetrofitClient {
-    private const val BASE_URL = "http://192.168.1.8:5000/"
+    private const val BASE_URL = "http://192.168.1.25:5000/"
     private val logging = HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY)
 
     private val moshi: Moshi = Moshi.Builder()
@@ -22,6 +23,7 @@ object RetrofitClient {
     val myAPIService: MyAPIService by lazy {
         Retrofit.Builder()
             .baseUrl(BASE_URL)
+            .addConverterFactory(ScalarsConverterFactory.create())
             .addConverterFactory(MoshiConverterFactory.create(moshi))
             .client(okHttpClient)
             .build()
