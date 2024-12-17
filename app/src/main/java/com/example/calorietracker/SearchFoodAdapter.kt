@@ -8,7 +8,7 @@ import androidx.navigation.findNavController
 import androidx.recyclerview.widget.RecyclerView
 import com.example.calorietracker.models.FoodSearchResponse
 
-class SearchFoodAdapter(private val data: List<FoodSearchResponse>) : RecyclerView.Adapter<SearchFoodAdapter.SearchFoodViewHolder>() {
+class SearchFoodAdapter(private val data: List<FoodSearchResponse>, private val mealCategory: String) : RecyclerView.Adapter<SearchFoodAdapter.SearchFoodViewHolder>() {
 
     class SearchFoodViewHolder(val row: View) : RecyclerView.ViewHolder(row) {
         val foodName: TextView = row.findViewById(R.id.searchFoodName)
@@ -21,7 +21,7 @@ class SearchFoodAdapter(private val data: List<FoodSearchResponse>) : RecyclerVi
 
         holder.row.setOnClickListener {
             val navController = holder.row.findNavController()
-            val action = SearchFragmentDirections.actionSearchFragmentToAddFoodFragment(data[holder.adapterPosition].food_id)
+            val action = SearchFragmentDirections.actionSearchFragmentToAddFoodFragment(data[holder.adapterPosition].food_id, mealCategory)
             navController.navigate(action)
         }
 

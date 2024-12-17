@@ -44,6 +44,7 @@ android {
 }
 
 dependencies {
+    implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
     val room_version="2.6.1"
     implementation(libs.androidx.room.runtime)
     kapt("androidx.room:room-compiler:$room_version")

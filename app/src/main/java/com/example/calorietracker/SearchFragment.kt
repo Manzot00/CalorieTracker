@@ -1,20 +1,20 @@
 package com.example.calorietracker
 
 import android.content.ContentValues.TAG
-import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
 import android.widget.SearchView
 import android.widget.Toast
+import androidx.activity.addCallback
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.calorietracker.api.RetrofitClient
-import com.example.calorietracker.databinding.FragmentProfileBinding
 import com.example.calorietracker.databinding.FragmentSearchBinding
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
@@ -24,6 +24,7 @@ class SearchFragment : Fragment() {
 
     private var _binding: FragmentSearchBinding? = null
     private val binding get() = _binding!!
+    private val args: SearchFragmentArgs by navArgs()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,6 +42,10 @@ class SearchFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
+            // Torna al fragment root
+            findNavController().navigate(R.id.homeFragment)
+        }
 
         binding.searchRV.layoutManager = LinearLayoutManager(requireContext())
 
@@ -69,7 +74,7 @@ class SearchFragment : Fragment() {
                     200 -> {
                         val data = response.body()
                         if (data != null) {
-                            binding.searchRV.adapter = SearchFoodAdapter(data)
+                            binding.searchRV.adapter = SearchFoodAdapter(data, args.mealCategory)
                         }
                     }
                     400 -> {

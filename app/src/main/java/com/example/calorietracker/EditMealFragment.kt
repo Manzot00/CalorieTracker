@@ -19,28 +19,24 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.example.calorietracker.api.RetrofitClient
 import com.example.calorietracker.database.LocalDatabase
-import com.example.calorietracker.databinding.FragmentAddFoodBinding
+import com.example.calorietracker.database.MealDao
+import com.example.calorietracker.databinding.FragmentEditMealBinding
 import com.example.calorietracker.models.FoodDetailResponse
 import com.example.calorietracker.models.Macro
 import com.example.calorietracker.models.Meal
 import com.example.calorietracker.models.MealCategories
-import com.example.calorietracker.models.SelectedDay
-import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import java.util.UUID
 
-class AddFoodFragment : Fragment() {
+class EditMealFragment : Fragment() {
 
-    private var _binding: FragmentAddFoodBinding? = null
+    private var _binding: FragmentEditMealBinding? = null
     private val binding get() = _binding!!
     private var food: FoodDetailResponse? = null
+    private var meal: Meal? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,11 +47,11 @@ class AddFoodFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         // Inflate the layout for this fragment
-        _binding = FragmentAddFoodBinding.inflate(inflater, container, false)
+        _binding = FragmentEditMealBinding.inflate(inflater, container, false)
         return binding.root
     }
 
-    private val args: AddFoodFragmentArgs by navArgs()
+    private val args: EditMealFragmentArgs by navArgs()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -63,34 +59,29 @@ class AddFoodFragment : Fragment() {
         val mealDao = localDatabase.getMealDao()
 
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
-            // Torna al search fragment
-            findNavController().navigate(R.id.searchFragment)
+            // Torna al fragment root
+            findNavController().navigate(R.id.homeFragment)
         }
 
-        // Ottieni la lista di categorie e impostala come elenco di opzioni per il menu a discesa
         val adapter = ArrayAdapter(requireContext(),
             android.R.layout.simple_spinner_item,
             MealCategories.categories.map { it.name })
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         binding.mealCategorySpinner.adapter = adapter
-        val selectedCategoryIndex = MealCategories.categories.indexOfFirst { it.name == args.mealCategory }
-        if (selectedCategoryIndex != -1) {
-            binding.mealCategorySpinner.setSelection(selectedCategoryIndex)
-        }
 
-        getFood(args.foodId)
+        getMealDetails(mealDao)
 
-        binding.servingTypeSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+        binding.mealServingTypeSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 val selectedServing = food?.servings?.get(position)
                 selectedServing?.let { serving ->
 
                     // Update UI elements
-                    binding.foodAmountET.setText("1")
-                    binding.foodCaloriesTV.text = serving.calories?.toString() ?: ""
-                    binding.foodProteinTV.text = serving.protein?.toString() ?: ""
-                    binding.foodCarbsTV.text = serving.carbohydrate?.toString() ?: ""
-                    binding.foodFatsTV.text = serving.fat?.toString() ?: ""
+                    binding.mealAmountET.setText("1")
+                    binding.mealCaloriesTV.text = serving.calories?.toString() ?: ""
+                    binding.mealProteinTV.text = serving.protein?.toString() ?: ""
+                    binding.mealCarbsTV.text = serving.carbohydrate?.toString() ?: ""
+                    binding.mealFatsTV.text = serving.fat?.toString() ?: ""
                 }
             }
 
@@ -98,15 +89,15 @@ class AddFoodFragment : Fragment() {
         }
 
         // Gestisci la quantità di cibo
-        binding.foodAmountET.addTextChangedListener(object : TextWatcher {
+        binding.mealAmountET.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                binding.saveFoodBtn.isEnabled = (s?.isNotEmpty() ?: false) &&
-                        binding.servingTypeSpinner.selectedItemPosition != AdapterView.INVALID_POSITION &&
+                binding.saveMealBtn.isEnabled = (s?.isNotEmpty() ?: false) &&
+                        binding.mealServingTypeSpinner.selectedItemPosition != AdapterView.INVALID_POSITION &&
                         binding.mealCategorySpinner.selectedItemPosition != AdapterView.INVALID_POSITION
                 val amount = s.toString().toDoubleOrNull() ?: 0.0 // Default to 1.0 if invalid input
-                val selectedServing = food?.servings?.find { it.serving_description == binding.servingTypeSpinner.selectedItem.toString() }
+                val selectedServing = food?.servings?.find { it.serving_description == binding.mealServingTypeSpinner.selectedItem.toString() }
 
                 selectedServing?.let { serving ->
                     val newCalories = serving.calories?.times(amount)
@@ -115,19 +106,30 @@ class AddFoodFragment : Fragment() {
                     val newFat = serving.fat?.times(amount)
 
                     // Update UI elements
-                    binding.foodCaloriesTV.text = newCalories?.toString() ?: ""
-                    binding.foodProteinTV.text = newProtein?.toString() ?: ""
-                    binding.foodCarbsTV.text = newCarbs?.toString() ?: ""
-                    binding.foodFatsTV.text = newFat?.toString() ?: ""
+                    binding.mealCaloriesTV.text = newCalories?.toString() ?: ""
+                    binding.mealProteinTV.text = newProtein?.toString() ?: ""
+                    binding.mealCarbsTV.text = newCarbs?.toString() ?: ""
+                    binding.mealFatsTV.text = newFat?.toString() ?: ""
                 }
             }
             override fun afterTextChanged(s: Editable?) {}
         })
 
-        binding.saveFoodBtn.setOnClickListener {
-            val amount = binding.foodAmountET.text.toString().toDoubleOrNull() ?: 0.0
-            val selectedServing = food?.servings?.find { it.serving_description == binding.servingTypeSpinner.selectedItem.toString() }
-            val mealCategory = binding.mealCategorySpinner.selectedItem?.toString()
+        binding.deleteMealBtn.setOnClickListener {
+            lifecycleScope.launch(Dispatchers.IO) {
+                mealDao.deleteMeal(meal!!)
+                withContext(Dispatchers.Main) {
+                    MealCategories.removeMealFromCategory(meal!!.mealCategory, meal!!)
+                    Toast.makeText(requireContext(), "Meal deleted", Toast.LENGTH_SHORT).show()
+                    findNavController().navigate(R.id.homeFragment)
+                }
+            }
+        }
+
+        binding.saveMealBtn.setOnClickListener {
+            val amount = binding.mealAmountET.text.toString().toDouble()
+            val selectedServing = food?.servings?.find { it.serving_description == binding.mealServingTypeSpinner.selectedItem.toString() }
+            val mealCategory = binding.mealCategorySpinner.selectedItem.toString()
 
             val macros = Macro(
                 calories = selectedServing?.calories?.times(amount),
@@ -151,40 +153,38 @@ class AddFoodFragment : Fragment() {
                 vitaminD = selectedServing?.vitamin_d?.times(amount)
             )
 
-            if (selectedServing != null && mealCategory != null) {
-                val meal = Meal(
-                    mealId = UUID.randomUUID().toString(),
-                    mealName = "${food?.food_name ?: ""} ${food?.brand_name?.let { "($it)" } ?: ""}",
-                    mealCategory = mealCategory,
-                    servingType = selectedServing.measurement_description.toString(),
-                    amount = amount,
-                    creationDate = SelectedDay.selectedDate.value ?: SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()),
-                    macros = macros,
-                    foodId = food?.food_id ?: 0
-                )
-                lifecycleScope.launch(Dispatchers.IO) {
-                    mealDao.insertMeal(meal)
+            val updatedMeal = meal?.copy(
+                amount = amount,
+                mealCategory = mealCategory,
+                servingType = selectedServing?.measurement_description ?: "",
+                macros = macros
+            )
+
+            lifecycleScope.launch(Dispatchers.IO) {
+                mealDao.updateMeal(updatedMeal!!)
+                withContext(Dispatchers.Main) {
+                    MealCategories.editMealInCategory(meal!!.mealCategory, meal!!, updatedMeal)
+                    Toast.makeText(requireContext(), "Meal updated", Toast.LENGTH_SHORT).show()
+                    findNavController().navigate(R.id.homeFragment)
                 }
-                MealCategories.addMealToCategory(mealCategory, meal)
-                Log.d("MealLists", "${MealCategories.categories.map { it.meals }}")
-
-                Toast.makeText(requireContext(), "Meal added to $mealCategory", Toast.LENGTH_SHORT).show()
-                val navController = findNavController()
-                navController.navigate(AddFoodFragmentDirections.actionAddFoodFragmentToHomeFragment())
-
-            } else {
-                Toast.makeText(requireContext(), "Invalid input", Toast.LENGTH_SHORT).show()
             }
         }
+
     }
 
-    private fun getFood(foodId: Long) {
+    private fun getMealDetails(mealDao: MealDao) {
         lifecycleScope.launch(Dispatchers.IO) {
+            meal = mealDao.getMealById(args.mealId)
+            withContext(Dispatchers.Main) {
+                binding.mealAmountET.setText(meal!!.amount.toString())
+                binding.mealCategorySpinner.setSelection(MealCategories.categories.indexOfFirst { it.name == meal!!.mealCategory })
+            }
+
             try {
                 val user = FirebaseAuth.getInstance().currentUser
                 val token = user?.getIdToken(false)?.await()?.token
 
-                val response = RetrofitClient.myAPIService.getFood(foodId,"Bearer $token")
+                val response = RetrofitClient.myAPIService.getFood(meal!!.foodId,"Bearer $token")
                 when (response.code()) {
                     200 -> {
                         val foodDetailResponse = response.body()
@@ -197,13 +197,13 @@ class AddFoodFragment : Fragment() {
                                     android.R.layout.simple_spinner_item,
                                     servings.map { it.serving_description })
                                 servingAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-                                binding.servingTypeSpinner.adapter = servingAdapter
+                                binding.mealServingTypeSpinner.adapter = servingAdapter
                                 // Trigger initial selection
-                                binding.servingTypeSpinner.setSelection(0)
+                                binding.mealServingTypeSpinner.setSelection(servings.indexOfFirst { it.measurement_description == meal!!.servingType })
 
-                                binding.foodNameTV.text = food?.food_name
-                                binding.foodBrandNameTV.text = food?.brand_name
-                                binding.foodBrandNameTV.isVisible = food?.brand_name != null
+                                binding.mealNameTV.text = food?.food_name
+                                binding.mealBrandNameTV.text = food?.brand_name
+                                binding.mealBrandNameTV.isVisible = food?.brand_name != null
                             }
                         }
                     }
@@ -231,6 +231,8 @@ class AddFoodFragment : Fragment() {
             }catch (e: Exception) {
                 e.printStackTrace()
             }
+
         }
     }
+
 }

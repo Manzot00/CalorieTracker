@@ -21,4 +21,12 @@
         <item name="android:popupBackground">@drawable/spinner_background</item>
     </style>
 
+    <style name="CustomDatePickerDialogTheme" parent="Theme.AppCompat.Light.Dialog">
+        <item name="colorAccent">#A2A2A2</item>
+        <item name="android:background">@color/third_color</item>
+        <item name="android:textColorPrimary">@color/text_primary</item>
+        <item name="android:textColorSecondary">@color/text_secondary</item>
+        <item name="android:buttonTint">@color/text_primary</item>
+    </style>
+
 </resources>

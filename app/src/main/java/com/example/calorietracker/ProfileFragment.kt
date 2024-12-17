@@ -16,10 +16,8 @@ import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
-import androidx.compose.ui.semantics.text
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
-import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.lifecycleScope
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKeys
@@ -27,10 +25,8 @@ import com.example.calorietracker.api.RetrofitClient
 import com.example.calorietracker.auth.LoginActivity
 import com.example.calorietracker.databinding.FragmentProfileBinding
 import com.example.calorietracker.models.DailyGoals
-import com.example.calorietracker.utils.DataStoreManager
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
@@ -140,7 +136,7 @@ class ProfileFragment : Fragment() {
     }
 
     private fun getDailyGoalsFromAPI(sharedPreferences: SharedPreferences) {
-        lifecycleScope.launch {
+        lifecycleScope.launch(Dispatchers.IO) {
             try {
                 isFetchingFromAPI = true
                 val user = FirebaseAuth.getInstance().currentUser
@@ -171,21 +167,30 @@ class ProfileFragment : Fragment() {
                         }
                     }
                     401 -> {
-                        Log.e(TAG, "Unauthorized request: ${response.errorBody()?.string()}")
-                        Toast.makeText(requireContext(), "Unauthorized request", Toast.LENGTH_SHORT).show()
+                        withContext(Dispatchers.Main) {
+                            Log.e(TAG, "Unauthorized request: ${response.errorBody()?.string()}")
+                            Toast.makeText(requireContext(), "Unauthorized request", Toast.LENGTH_SHORT).show()
+                        }
                     }
                     403 -> {
-                        Log.e(TAG, "Forbidden request: ${response.errorBody()?.string()}")
-                        Toast.makeText(requireContext(), "Forbidden request", Toast.LENGTH_SHORT).show()
+                        withContext(Dispatchers.Main) {
+                            Log.e(TAG, "Forbidden request: ${response.errorBody()?.string()}")
+                            Toast.makeText(requireContext(), "Forbidden request", Toast.LENGTH_SHORT).show()
+                        }
                     }
                     500 -> {
-                        Log.e(TAG, "Internal server error: ${response.errorBody()?.string()}")
-                        Toast.makeText(requireContext(), "Internal server error", Toast.LENGTH_SHORT).show()
+                        withContext(Dispatchers.Main) {
+                            Log.e(TAG, "Internal server error: ${response.errorBody()?.string()}")
+                            Toast.makeText(requireContext(), "Internal server error", Toast.LENGTH_SHORT).show()
+                        }
                     }
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Error fetching daily goals: ${e.message}")
-                Toast.makeText(requireContext(), "Error fetching daily goals", Toast.LENGTH_SHORT).show()
+                withContext(Dispatchers.Main) {
+                    //isFetchingFromAPI = false
+                    Log.e(TAG, "Error fetching daily goals: ${e.message}")
+                    Toast.makeText(requireContext(), "Error fetching daily goals", Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
@@ -200,7 +205,7 @@ class ProfileFragment : Fragment() {
             putFloat("water_goal", binding.dailyWaterGoalEN.text.toString().toFloat())
             apply()
         }
-        lifecycle.coroutineScope.launch {
+        lifecycleScope.launch(Dispatchers.IO) {
             try {
                 //Remote update
                 val user = FirebaseAuth.getInstance().currentUser
@@ -222,40 +227,56 @@ class ProfileFragment : Fragment() {
                 )
                 when (response.code()) {
                     200, 201 -> {
-                        Log.d(TAG, "Daily goals updated successfully")
-                        Toast.makeText(requireContext(), "Daily goals updated successfully", Toast.LENGTH_SHORT).show()
+                        withContext(Dispatchers.Main) {
+                            Log.d(TAG, "Daily goals updated successfully")
+                            Toast.makeText(requireContext(), "Daily goals updated successfully", Toast.LENGTH_SHORT).show()
+                        }
                     }
-
                     400 -> {
-                        Log.e(TAG, "Bad request: ${response.errorBody()?.string()}")
-                        Toast.makeText(requireContext(), "Bad request", Toast.LENGTH_SHORT).show()
+                        withContext(Dispatchers.Main) {
+                            Log.e(TAG, "Bad request: ${response.errorBody()?.string()}")
+                            Toast.makeText(requireContext(), "Bad request", Toast.LENGTH_SHORT).show()
+                        }
                     }
 
                     401 -> {
-                        Log.e(TAG, "Unauthorized request: ${response.errorBody()?.string()}")
-                        Toast.makeText(requireContext(), "Unauthorized request", Toast.LENGTH_SHORT)
-                            .show()
+                        withContext(Dispatchers.Main) {
+                            Log.e(TAG, "Unauthorized request: ${response.errorBody()?.string()}")
+                            Toast.makeText(requireContext(), "Unauthorized request", Toast.LENGTH_SHORT).show()
+                        }
                     }
 
                     403 -> {
-                        Log.e(TAG, "Forbidden request: ${response.errorBody()?.string()}")
-                        Toast.makeText(requireContext(), "Forbidden request", Toast.LENGTH_SHORT)
-                            .show()
+                        withContext(Dispatchers.Main) {
+                            Log.e(TAG, "Forbidden request: ${response.errorBody()?.string()}")
+                            Toast.makeText(
+                                requireContext(),
+                                "Forbidden request",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
                     }
 
                     500 -> {
-                        Log.e(TAG, "Internal server error: ${response.errorBody()?.string()}")
-                        Toast.makeText(
-                            requireContext(),
-                            "Internal server error",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        withContext(Dispatchers.Main) {
+                            Log.e(TAG, "Internal server error: ${response.errorBody()?.string()}")
+                            Toast.makeText(
+                                requireContext(),
+                                "Internal server error",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
                     }
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Error updating daily goals: ${e.message}")
-                Toast.makeText(requireContext(), "Error updating daily goals", Toast.LENGTH_SHORT)
-                    .show()
+                withContext(Dispatchers.Main) {
+                    Log.e(TAG, "Error updating daily goals: ${e.message}")
+                    Toast.makeText(
+                        requireContext(),
+                        "Error updating daily goals",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
             }
         }
     }

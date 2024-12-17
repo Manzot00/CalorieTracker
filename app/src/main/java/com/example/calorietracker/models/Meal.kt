@@ -10,10 +10,13 @@ import com.google.firebase.Timestamp
 @Entity(tableName = "meals")
 @TypeConverters(TimestampConverter::class)
 data class Meal(
-    @PrimaryKey val mealId: String,
+    @PrimaryKey val mealId: String ,
     val mealName: String,
     val mealCategory: String,
-    val creationDate: Timestamp,
+    val servingType: String,
+    val amount: Double,
+    val creationDate: String,
+    val foodId: Long,
     @Embedded val macros: Macro
 )
 

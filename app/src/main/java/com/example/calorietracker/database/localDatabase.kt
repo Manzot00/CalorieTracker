@@ -7,19 +7,19 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.example.calorietracker.models.Meal
 
-@Database(entities = [Meal::class], version = 1)
+@Database(entities = [Meal::class], version = 2)
 @TypeConverters(TimestampConverter::class)
-abstract class localDatabase : RoomDatabase() {
+abstract class LocalDatabase : RoomDatabase() {
     abstract fun getMealDao(): MealDao
 
     companion object {
         @Volatile
-        private var INSTANCE: localDatabase? = null
-        fun getInstance(context: Context): localDatabase {
+        private var INSTANCE: LocalDatabase? = null
+        fun getInstance(context: Context): LocalDatabase {
             return INSTANCE ?: synchronized(this) {
                 INSTANCE ?: Room.databaseBuilder(
                     context.applicationContext,
-                    localDatabase::class.java,
+                    LocalDatabase::class.java,
                     "local_database"
                 ).build()
             }

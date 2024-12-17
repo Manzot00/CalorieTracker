@@ -6,6 +6,7 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
 import com.example.calorietracker.models.Meal
+import com.google.firebase.Timestamp
 
 @Dao
 interface MealDao {
@@ -20,5 +21,11 @@ interface MealDao {
 
     @Delete
     fun deleteMeal(meal: Meal)
+
+    @Query("SELECT * FROM meals WHERE creationDate = :date")
+    fun getMealsByDate(date: String): List<Meal>
+
+    @Query("SELECT * FROM meals WHERE mealId = :id")
+    fun getMealById(id: String): Meal
 
 }
