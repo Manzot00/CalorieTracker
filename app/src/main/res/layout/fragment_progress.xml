@@ -22,8 +22,6 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.056" />
 
-    <!-- Spinner per selezionare il range di tempo -->
-
     <Spinner
         android:id="@+id/timeRangeSpinner"
         android:layout_width="0dp"
@@ -57,7 +55,6 @@
         app:layout_constraintTop_toBottomOf="@id/timeRangeSpinner"
         app:layout_constraintVertical_bias="0.0" />
 
-    <!-- Titolo per il grafico del peso -->
     <com.github.mikephil.charting.charts.LineChart
         android:id="@+id/caloriesLineChart"
         android:layout_width="0dp"
@@ -69,10 +66,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/caloriesChartTitle"
         app:layout_constraintVertical_bias="0.0" />
-
-    <!-- LineChart per il peso -->
-
-    <!-- EditText per inserire il peso -->
 
     <TextView
         android:id="@+id/weightChartTitle"
@@ -96,14 +89,13 @@
         android:layout_margin="10dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintHorizontal_bias="0.526"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/weightChartTitle"
         app:layout_constraintVertical_bias="0.0" />
 
-    <!-- Button per salvare il peso -->
     <EditText
-        android:id="@+id/weightEditText"
+        android:id="@+id/weightET"
         android:layout_width="0dp"
         android:layout_height="48dp"
         android:layout_margin="10dp"
@@ -114,13 +106,13 @@
         android:textColor="@color/text_primary"
         android:textColorHint="@color/text_secondary"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/saveWeightButton"
+        app:layout_constraintEnd_toStartOf="@id/saveWeightBtn"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/weightLineChart"
         app:layout_constraintVertical_bias="0.0" />
 
     <Button
-        android:id="@+id/saveWeightButton"
+        android:id="@+id/saveWeightBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="10dp"
@@ -132,6 +124,5 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/weightLineChart"
         app:layout_constraintVertical_bias="0.0" />
-
 
 </androidx.constraintlayout.widget.ConstraintLayout>

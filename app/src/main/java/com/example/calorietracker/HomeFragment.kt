@@ -9,6 +9,7 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.compose.ui.semantics.text
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -61,7 +62,7 @@ class HomeFragment : Fragment() {
         // Calcola la settimana iniziale
         currentWeek = getWeekDates(SelectedDay.selectedDate.value ?: "")
 
-        // Imposta l'adapter per il RecyclerView
+        // Imposta l'adapter per il RecyclerView del calendario
         val calendarAdapter = CalendarAdapter(currentWeek, mealDao)
         binding.calendarRecyclerView.layoutManager = GridLayoutManager(requireContext(), 7)
         binding.calendarRecyclerView.adapter = calendarAdapter
@@ -103,6 +104,7 @@ class HomeFragment : Fragment() {
 
         val dailyGoals = getDailyGoals()
         binding.targetCaloriesTV.text = "Target kcals: ${dailyGoals.calorieGoal}"
+
         MealCategories.categories.forEach { category ->
             category.meals.observe(viewLifecycleOwner) {
                 // Aggiorna la UI ogni volta che cambia una categoria
@@ -113,41 +115,13 @@ class HomeFragment : Fragment() {
         binding.datePickerBtn.setOnClickListener {
             openDatePicker(SelectedDay.selectedDate.value ?: "")
         }
-    }
 
-    /*private fun populateMealCategories(mealDao: MealDao, adapter: MealCategoryAdapter) {
-        // Ottieni la data corrente
-        val calendar = Calendar.getInstance()
-        val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(calendar.time)
-
-        lifecycleScope.launch(Dispatchers.IO) {
-            // Recupera i pasti dal database
-            val meals = mealDao.getMealsByDate(currentDate)
-            Log.d("MealLists", "${meals.map { it.mealName }}")
-
-            // Aggiungi i pasti alle categorie
-            meals.forEach { meal ->
-                MealCategories.addMealToCategory(meal.mealCategory, meal)
-            }
-
-            // Imposta la variabile di stato a true
-            MealCategories.isDataLoaded = true
-
-            withContext(Dispatchers.Main) {
-                // Notifica all'adapter che i dati sono cambiati
-                adapter.notifyDataSetChanged()
-                val dailyGoals = getDailyGoals()
-                binding.targetCaloriesTV.text = "Target kcals: ${dailyGoals.calorieGoal}"
-                binding.remainingCalsTV.text = "${dailyGoals.calorieGoal - MealCategories.getTotalCalories()} kcals\n remaining"
-                binding.proteinTV.text = "${MealCategories.getTotalProteins()}/${dailyGoals.proteinGoal}g protein"
-                binding.carbsTV.text = "${MealCategories.getTotalCarbs()}/${dailyGoals.carbGoal}g carbs"
-                binding.fatsTV.text = "${MealCategories.getTotalFats()}/${dailyGoals.fatGoal}g fats"
-                val ringChart = binding.ringChart
-                ringChart.max = dailyGoals.calorieGoal
-                ringChart.progress = MealCategories.getTotalCalories()
-            }
+        binding.todayBtn.setOnClickListener {
+            SelectedDay.updateSelectedDate(
+                SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+            )
         }
-    }*/
+    }
 
     private fun getDailyGoals(): DailyGoals{
         val sharedPref = requireActivity().getSharedPreferences("daily_goals", Context.MODE_PRIVATE)
@@ -191,14 +165,27 @@ class HomeFragment : Fragment() {
 
     // Funzione per aggiornare la UI
     private fun updateUI(dailyGoals: DailyGoals) {
-        binding.remainingCalsTV.text = "${dailyGoals.calorieGoal - MealCategories.getTotalCalories()} kcals\n remaining"
-        binding.proteinTV.text = "${MealCategories.getTotalProteins()}/${dailyGoals.proteinGoal}g protein"
-        binding.carbsTV.text = "${MealCategories.getTotalCarbs()}/${dailyGoals.carbGoal}g carbs"
-        binding.fatsTV.text = "${MealCategories.getTotalFats()}/${dailyGoals.fatGoal}g fats"
+        val totalCalories = MealCategories.getTotalCalories()
+        val totalProteins = MealCategories.getTotalProteins()
+        val totalCarbs = MealCategories.getTotalCarbs()
+        val totalFats = MealCategories.getTotalFats()
+        val calorieDifference = dailyGoals.calorieGoal - totalCalories
+
+        binding.remainingCalsTV.text = when {
+            calorieDifference < 0 -> "${-calorieDifference} kcals\nin surplus"
+            calorieDifference > 0 -> "$calorieDifference kcals\nremaining"
+            else -> "0 kcals\non track"
+        }
+        binding.proteinTV.text = "${totalProteins}/${dailyGoals.proteinGoal}g protein"
+        binding.carbsTV.text = "${totalCarbs}/${dailyGoals.carbGoal}g carbs"
+        binding.fatsTV.text = "${totalFats}/${dailyGoals.fatGoal}g fats"
 
         val ringChart = binding.ringChart
         ringChart.max = dailyGoals.calorieGoal
-        ringChart.progress = MealCategories.getTotalCalories()
+        ringChart.progress = totalCalories
+        val secondRingChart = binding.secondRingChart
+        secondRingChart.max = dailyGoals.calorieGoal
+        secondRingChart.progress = if (calorieDifference < 0 ) -calorieDifference else 0
     }
 
     private fun openDatePicker(selectedDate: String) {

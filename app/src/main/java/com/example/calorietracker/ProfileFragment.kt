@@ -108,91 +108,15 @@ class ProfileFragment : Fragment() {
         binding.saveGoalsBtn.isEnabled = false
     }
 
-    private var isFetchingFromAPI = false
-
     // Funzione per recuperare i valori dei goal giornalieri
     private fun getDailyGoals(): DailyGoals {
-        if (sharedPref.contains("calorie_goal") &&
-            sharedPref.contains("protein_goal") &&
-            sharedPref.contains("carb_goal") &&
-            sharedPref.contains("fat_goal") &&
-            sharedPref.contains("water_goal")
-        ) {
-            return DailyGoals(
-                sharedPref.getInt("calorie_goal", -1),
-                sharedPref.getInt("protein_goal", -1),
-                sharedPref.getInt("carb_goal", -1),
-                sharedPref.getInt("fat_goal", -1),
-                sharedPref.getFloat("water_goal", -1.0f).toDouble()
-            )
-        } else {
-            // Return default values immediately
-            if (!isFetchingFromAPI) {
-                isFetchingFromAPI = true
-                getDailyGoalsFromAPI(sharedPref)
-            }
-            return DailyGoals() // Return default values to display the screen quickly
-        }
-    }
-
-    private fun getDailyGoalsFromAPI(sharedPreferences: SharedPreferences) {
-        lifecycleScope.launch(Dispatchers.IO) {
-            try {
-                isFetchingFromAPI = true
-                val user = FirebaseAuth.getInstance().currentUser
-                val token = user?.getIdToken(false)?.await()?.token
-                val userId = user?.uid
-
-                val response = RetrofitClient.myAPIService.getDailyGoals(userId!!, "Bearer $token")
-                when (response.code()) {
-                    200, 201 -> {
-                        val dailyGoals = response.body()
-                        if (dailyGoals != null) {
-                            sharedPreferences.edit().apply {
-                                putInt("calorie_goal", dailyGoals.calorieGoal)
-                                putInt("protein_goal", dailyGoals.proteinGoal)
-                                putInt("carb_goal", dailyGoals.carbGoal)
-                                putInt("fat_goal", dailyGoals.fatGoal)
-                                putFloat("water_goal", dailyGoals.waterGoal.toFloat())
-                                apply()
-                            }
-                            withContext(Dispatchers.Main) {
-                                binding.dailyCalorieGoalEN.setText(dailyGoals.calorieGoal.toString())
-                                binding.dailyProteinGoalEN.setText(dailyGoals.proteinGoal.toString())
-                                binding.dailyCarbsGoalEN.setText(dailyGoals.carbGoal.toString())
-                                binding.dailyFatsGoalEN.setText(dailyGoals.fatGoal.toString())
-                                binding.dailyWaterGoalEN.setText(dailyGoals.waterGoal.toString())
-                            }
-                            isFetchingFromAPI = false
-                        }
-                    }
-                    401 -> {
-                        withContext(Dispatchers.Main) {
-                            Log.e(TAG, "Unauthorized request: ${response.errorBody()?.string()}")
-                            Toast.makeText(requireContext(), "Unauthorized request", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                    403 -> {
-                        withContext(Dispatchers.Main) {
-                            Log.e(TAG, "Forbidden request: ${response.errorBody()?.string()}")
-                            Toast.makeText(requireContext(), "Forbidden request", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                    500 -> {
-                        withContext(Dispatchers.Main) {
-                            Log.e(TAG, "Internal server error: ${response.errorBody()?.string()}")
-                            Toast.makeText(requireContext(), "Internal server error", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    //isFetchingFromAPI = false
-                    Log.e(TAG, "Error fetching daily goals: ${e.message}")
-                    Toast.makeText(requireContext(), "Error fetching daily goals", Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
+        return DailyGoals(
+            sharedPref.getInt("calorie_goal", -1),
+            sharedPref.getInt("protein_goal", -1),
+            sharedPref.getInt("carb_goal", -1),
+            sharedPref.getInt("fat_goal", -1),
+            sharedPref.getFloat("water_goal", -1.0f).toDouble()
+        )
     }
 
     private fun updateDailyGoals() {
@@ -204,80 +128,6 @@ class ProfileFragment : Fragment() {
             putInt("fat_goal", binding.dailyFatsGoalEN.text.toString().toInt())
             putFloat("water_goal", binding.dailyWaterGoalEN.text.toString().toFloat())
             apply()
-        }
-        lifecycleScope.launch(Dispatchers.IO) {
-            try {
-                //Remote update
-                val user = FirebaseAuth.getInstance().currentUser
-                val token = user?.getIdToken(false)?.await()?.token
-                val userId = user?.uid
-
-                val dailyGoals = DailyGoals(
-                    binding.dailyCalorieGoalEN.text.toString().toInt(),
-                    binding.dailyProteinGoalEN.text.toString().toInt(),
-                    binding.dailyCarbsGoalEN.text.toString().toInt(),
-                    binding.dailyFatsGoalEN.text.toString().toInt(),
-                    binding.dailyWaterGoalEN.text.toString().toDouble()
-                )
-
-                val response = RetrofitClient.myAPIService.updateDailyGoals(
-                    userId!!,
-                    "Bearer $token",
-                    dailyGoals
-                )
-                when (response.code()) {
-                    200, 201 -> {
-                        withContext(Dispatchers.Main) {
-                            Log.d(TAG, "Daily goals updated successfully")
-                            Toast.makeText(requireContext(), "Daily goals updated successfully", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                    400 -> {
-                        withContext(Dispatchers.Main) {
-                            Log.e(TAG, "Bad request: ${response.errorBody()?.string()}")
-                            Toast.makeText(requireContext(), "Bad request", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-
-                    401 -> {
-                        withContext(Dispatchers.Main) {
-                            Log.e(TAG, "Unauthorized request: ${response.errorBody()?.string()}")
-                            Toast.makeText(requireContext(), "Unauthorized request", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-
-                    403 -> {
-                        withContext(Dispatchers.Main) {
-                            Log.e(TAG, "Forbidden request: ${response.errorBody()?.string()}")
-                            Toast.makeText(
-                                requireContext(),
-                                "Forbidden request",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                    }
-
-                    500 -> {
-                        withContext(Dispatchers.Main) {
-                            Log.e(TAG, "Internal server error: ${response.errorBody()?.string()}")
-                            Toast.makeText(
-                                requireContext(),
-                                "Internal server error",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    Log.e(TAG, "Error updating daily goals: ${e.message}")
-                    Toast.makeText(
-                        requireContext(),
-                        "Error updating daily goals",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            }
         }
     }
 

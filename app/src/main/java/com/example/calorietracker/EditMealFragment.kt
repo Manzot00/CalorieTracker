@@ -30,6 +30,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class EditMealFragment : Fragment() {
 
@@ -58,11 +61,6 @@ class EditMealFragment : Fragment() {
         val localDatabase = LocalDatabase.getInstance(requireContext())
         val mealDao = localDatabase.getMealDao()
 
-        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
-            // Torna al fragment root
-            findNavController().navigate(R.id.homeFragment)
-        }
-
         val adapter = ArrayAdapter(requireContext(),
             android.R.layout.simple_spinner_item,
             MealCategories.categories.map { it.name })
@@ -77,7 +75,6 @@ class EditMealFragment : Fragment() {
                 selectedServing?.let { serving ->
 
                     // Update UI elements
-                    binding.mealAmountET.setText("1")
                     binding.mealCaloriesTV.text = serving.calories?.toString() ?: ""
                     binding.mealProteinTV.text = serving.protein?.toString() ?: ""
                     binding.mealCarbsTV.text = serving.carbohydrate?.toString() ?: ""
@@ -93,9 +90,7 @@ class EditMealFragment : Fragment() {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                binding.saveMealBtn.isEnabled = (s?.isNotEmpty() ?: false) &&
-                        binding.mealServingTypeSpinner.selectedItemPosition != AdapterView.INVALID_POSITION &&
-                        binding.mealCategorySpinner.selectedItemPosition != AdapterView.INVALID_POSITION
+                binding.saveMealBtn.isEnabled = (s?.isNotEmpty() ?: false)
                 val amount = s.toString().toDoubleOrNull() ?: 0.0 // Default to 1.0 if invalid input
                 val selectedServing = food?.servings?.find { it.serving_description == binding.mealServingTypeSpinner.selectedItem.toString() }
 
@@ -157,7 +152,8 @@ class EditMealFragment : Fragment() {
                 amount = amount,
                 mealCategory = mealCategory,
                 servingType = selectedServing?.measurement_description ?: "",
-                macros = macros
+                macros = macros,
+                lastUpdated = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
             )
 
             lifecycleScope.launch(Dispatchers.IO) {
@@ -174,6 +170,7 @@ class EditMealFragment : Fragment() {
 
     private fun getMealDetails(mealDao: MealDao) {
         lifecycleScope.launch(Dispatchers.IO) {
+            binding.fetchingMealProgress.visibility = View.VISIBLE
             meal = mealDao.getMealById(args.mealId)
             withContext(Dispatchers.Main) {
                 binding.mealAmountET.setText(meal!!.amount.toString())
@@ -230,6 +227,10 @@ class EditMealFragment : Fragment() {
                 }
             }catch (e: Exception) {
                 e.printStackTrace()
+            }finally {
+                withContext(Dispatchers.Main) {
+                    binding.fetchingMealProgress.visibility = View.GONE
+                }
             }
 
         }

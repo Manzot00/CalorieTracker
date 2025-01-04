@@ -1,6 +1,7 @@
 package com.example.calorietracker.auth
 
 import android.content.ContentValues.TAG
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -17,6 +18,8 @@ import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKeys
 import com.example.calorietracker.HomeActivity
 import com.example.calorietracker.R
+import com.example.calorietracker.api.RetrofitClient
+import com.example.calorietracker.database.LocalDatabase
 import com.example.calorietracker.databinding.FragmentLoginBinding
 import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.auth.FirebaseAuth
@@ -50,6 +53,7 @@ class LoginFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         binding.loadingBar.visibility = View.INVISIBLE
+        binding.fetchingDataTV.visibility = View.INVISIBLE
 
         binding.loginBtn.setOnClickListener {
             if(!validateInput(binding.emailLogin, binding.pwLogin))
@@ -63,7 +67,7 @@ class LoginFragment : Fragment() {
                     Log.d(TAG, "User logged in successfully")
 
                     auth.currentUser?.let { user -> saveUserData(user) }
-                    navigateToHome()
+                    fetchAndSaveAllData()
 
                 } catch (e: Exception) {
                     when (e) {
@@ -114,10 +118,64 @@ class LoginFragment : Fragment() {
         requireActivity().finish()
     }
 
+    private suspend fun fetchAndSaveAllData(){
+        val userId = auth.currentUser?.uid
+        val token = auth.currentUser?.getIdToken(true)?.await()?.token
+        val mealDao = LocalDatabase.getInstance(requireContext()).getMealDao()
+        val weightDao = LocalDatabase.getInstance(requireContext()).getWeightDao()
+        val sharedPreferences = requireContext().getSharedPreferences("daily_goals", Context.MODE_PRIVATE)
+
+        try {
+            binding.fetchingDataTV.visibility = View.VISIBLE
+            // Recupera i dailyGoals
+            val dailyGoalsResponse = RetrofitClient.myAPIService.getDailyGoals(userId!!, "Bearer $token")
+            if (dailyGoalsResponse.isSuccessful) {
+                val dailyGoals = dailyGoalsResponse.body()
+                dailyGoals?.let {
+                    with(sharedPreferences.edit()) {
+                        putInt("calorie_goal", dailyGoals.calorieGoal)
+                        putInt("protein_goal", dailyGoals.proteinGoal)
+                        putInt("carb_goal", dailyGoals.carbGoal)
+                        putInt("fat_goal", dailyGoals.fatGoal)
+                        putFloat("water_goal", dailyGoals.waterGoal.toFloat())
+                        apply()
+                    }
+                } ?: throw Exception("Failed to fetch daily goals: ${dailyGoalsResponse.errorBody()?.string()}")
+
+                }
+            else {
+                throw Exception("Failed to fetch daily goals: ${dailyGoalsResponse.errorBody()?.string()}")
+            }
+
+            // Recupera i meals
+            val mealsResponse = RetrofitClient.myAPIService.getMeals(userId, "Bearer $token")
+            if (mealsResponse.isSuccessful) {
+                mealsResponse.body()?.let { meals ->
+                    mealDao.insertAllMeals(meals)
+                }
+            } else {
+                throw Exception("Failed to fetch meals: ${mealsResponse.errorBody()?.string()}")
+            }
+
+            // Recupera i weights
+            val weightsResponse = RetrofitClient.myAPIService.getWeights(userId, "Bearer $token")
+            if (weightsResponse.isSuccessful) {
+                weightsResponse.body()?.let { weights ->
+                    weightDao.insertAllWeights(weights)
+                }
+            } else {
+                throw Exception("Failed to fetch weights: ${weightsResponse.errorBody()?.string()}")
+            }
+
+        }catch (e: Exception) {
+            Log.e("FetchAndSaveData", "Error fetching and saving data", e)
+            Toast.makeText(requireContext(), "Error fetching and saving data", Toast.LENGTH_LONG).show()
+        }
+        binding.fetchingDataTV.visibility = View.INVISIBLE
+        navigateToHome()
+    }
+
     private suspend fun saveUserData(user: FirebaseUser) {
-        // Genero il token di autenticazione, ma non lo salvo. Lo genero per averlo in cache e poterlo usare in seguito
-        val token = user.getIdToken(true).await()?.token
-        Log.d(TAG, "Token: $token")
         val username = user.displayName
         val email = user.email
         val userId = user.uid
@@ -138,7 +196,7 @@ class LoginFragment : Fragment() {
             putString("userId", userId)
             apply()
         }
-        Log.d(TAG, "Username: $username, userId: $userId, token: $token")
+        Log.d(TAG, "Username: $username, userId: $userId, email: $email")
     }
 
     override fun onDestroyView() {

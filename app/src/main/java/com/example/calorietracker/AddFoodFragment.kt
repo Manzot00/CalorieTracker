@@ -62,11 +62,6 @@ class AddFoodFragment : Fragment() {
         val localDatabase = LocalDatabase.getInstance(requireContext())
         val mealDao = localDatabase.getMealDao()
 
-        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
-            // Torna al search fragment
-            findNavController().navigate(R.id.searchFragment)
-        }
-
         // Ottieni la lista di categorie e impostala come elenco di opzioni per il menu a discesa
         val adapter = ArrayAdapter(requireContext(),
             android.R.layout.simple_spinner_item,
@@ -160,7 +155,9 @@ class AddFoodFragment : Fragment() {
                     amount = amount,
                     creationDate = SelectedDay.selectedDate.value ?: SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()),
                     macros = macros,
-                    foodId = food?.food_id ?: 0
+                    foodId = food?.food_id ?: 0,
+                    userId = FirebaseAuth.getInstance().currentUser?.uid ?: "",
+                    lastUpdated = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
                 )
                 lifecycleScope.launch(Dispatchers.IO) {
                     mealDao.insertMeal(meal)
@@ -181,6 +178,7 @@ class AddFoodFragment : Fragment() {
     private fun getFood(foodId: Long) {
         lifecycleScope.launch(Dispatchers.IO) {
             try {
+                binding.fetchingFoodProgress.visibility = View.VISIBLE
                 val user = FirebaseAuth.getInstance().currentUser
                 val token = user?.getIdToken(false)?.await()?.token
 
@@ -230,6 +228,8 @@ class AddFoodFragment : Fragment() {
                 }
             }catch (e: Exception) {
                 e.printStackTrace()
+            }finally {
+                binding.fetchingFoodProgress.visibility = View.GONE
             }
         }
     }

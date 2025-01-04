@@ -3,29 +3,35 @@ package com.example.calorietracker.database
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import com.example.calorietracker.models.Meal
-import com.google.firebase.Timestamp
 
 @Dao
 interface MealDao {
     @Query("SELECT * FROM meals")
-    fun getAllMeals(): List<Meal>
+    suspend fun getAllMeals(): List<Meal>
 
-    @Insert
-    fun insertMeal(vararg meal: Meal)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAllMeals(meals: List<Meal>)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertMeal(meal: Meal)
 
     @Update
-    fun updateMeal(meal: Meal)
+    suspend fun updateMeal(meal: Meal)
 
     @Delete
-    fun deleteMeal(meal: Meal)
+    suspend fun deleteMeal(meal: Meal)
 
     @Query("SELECT * FROM meals WHERE creationDate = :date")
-    fun getMealsByDate(date: String): List<Meal>
+    suspend fun getMealsByDate(date: String): List<Meal>
 
     @Query("SELECT * FROM meals WHERE mealId = :id")
-    fun getMealById(id: String): Meal
+    suspend fun getMealById(id: String): Meal
+
+    @Query("SELECT * FROM meals WHERE lastUpdated = :lastUpdated")
+    suspend fun getMealsByLastUpdated(lastUpdated: String): List<Meal>
 
 }

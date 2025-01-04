@@ -37,6 +37,9 @@
         <argument
             android:name="mealCategory"
             app:argType="string" />
+        <action
+            android:id="@+id/action_searchFragment_to_barcodeScannerFragment"
+            app:destination="@id/barcodeScannerFragment" />
     </fragment>
     <fragment
         android:id="@+id/addFoodFragment"
@@ -67,4 +70,16 @@
         android:name="com.example.calorietracker.ProgressFragment"
         android:label="fragment_progress"
         tools:layout="@layout/fragment_progress" />
+    <fragment
+        android:id="@+id/barcodeScannerFragment"
+        android:name="com.example.calorietracker.BarcodeScannerFragment"
+        android:label="fragment_barcode_scanner"
+        tools:layout="@layout/fragment_barcode_scanner" >
+        <action
+            android:id="@+id/action_barcodeScannerFragment_to_addFoodFragment"
+            app:destination="@id/addFoodFragment" />
+        <argument
+            android:name="mealCategory"
+            app:argType="string" />
+    </fragment>
 </navigation>

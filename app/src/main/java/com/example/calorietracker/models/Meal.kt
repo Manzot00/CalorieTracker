@@ -4,11 +4,9 @@ import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverters
-import com.example.calorietracker.database.TimestampConverter
 import com.google.firebase.Timestamp
 
 @Entity(tableName = "meals")
-@TypeConverters(TimestampConverter::class)
 data class Meal(
     @PrimaryKey val mealId: String ,
     val mealName: String,
@@ -17,6 +15,8 @@ data class Meal(
     val amount: Double,
     val creationDate: String,
     val foodId: Long,
+    val userId: String,
+    val lastUpdated: String,
     @Embedded val macros: Macro
 )
 

@@ -9,7 +9,7 @@ plugins {
 
 android {
     namespace = "com.example.calorietracker"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.calorietracker"
@@ -44,7 +44,14 @@ android {
 }
 
 dependencies {
-    implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
+    implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.androidx.camera.core)
+    implementation(libs.androidx.camera.camera2)
+    implementation(libs.androidx.camera.lifecycle)
+    implementation(libs.androidx.camera.view)
+    implementation(libs.barcode.scanning)
+    implementation(libs.guava)
+    implementation(libs.mpandroidchart)
     val room_version="2.6.1"
     implementation(libs.androidx.room.runtime)
     kapt("androidx.room:room-compiler:$room_version")

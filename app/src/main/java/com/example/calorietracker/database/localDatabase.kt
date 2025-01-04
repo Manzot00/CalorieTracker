@@ -4,13 +4,13 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import androidx.room.TypeConverters
 import com.example.calorietracker.models.Meal
+import com.example.calorietracker.models.Weight
 
-@Database(entities = [Meal::class], version = 2)
-@TypeConverters(TimestampConverter::class)
+@Database(entities = [Meal::class, Weight::class], version = 4)
 abstract class LocalDatabase : RoomDatabase() {
     abstract fun getMealDao(): MealDao
+    abstract fun getWeightDao(): WeightDao
 
     companion object {
         @Volatile

@@ -42,11 +42,6 @@ class SearchFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
-            // Torna al fragment root
-            findNavController().navigate(R.id.homeFragment)
-        }
-
         binding.searchRV.layoutManager = LinearLayoutManager(requireContext())
 
         binding.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
@@ -61,11 +56,18 @@ class SearchFragment : Fragment() {
                 return true
             }
         })
+
+        binding.barcodeBtn.setOnClickListener {
+            val action = SearchFragmentDirections.actionSearchFragmentToBarcodeScannerFragment(args.mealCategory)
+            findNavController().navigate(action)
+        }
     }
 
     private fun searchFoods(query: String) {
         lifecycleScope.launch {
             try {
+                binding.fetchingProgress.visibility = View.VISIBLE
+
                 val user = FirebaseAuth.getInstance().currentUser
                 val token = user?.getIdToken(false)?.await()?.token
 
@@ -102,8 +104,10 @@ class SearchFragment : Fragment() {
             }catch (e: Exception) {
                 Toast.makeText(requireContext(), "Error retrieving data", Toast.LENGTH_SHORT).show()
                 Log.e(TAG, e.toString())
+            }finally {
+                // Nascondi il ProgressBar dopo aver ricevuto la risposta
+                binding.fetchingProgress.visibility = View.GONE
             }
-
         }
     }
 }

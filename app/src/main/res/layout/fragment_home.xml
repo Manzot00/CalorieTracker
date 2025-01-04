@@ -27,6 +27,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Daily Macros"
+                android:textStyle="bold"
                 android:textSize="34sp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
@@ -53,34 +54,37 @@
                     android:layout_marginTop="20dp"
                     android:orientation="horizontal">
 
-                    <Button
+                    <ImageButton
+                        android:id="@+id/todayBtn"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:background="@null"
-                        android:textColor="@color/text_primary"
-                        android:textSize="20sp"
-                        android:textStyle="bold" />
+                        android:scaleType="fitCenter"
+                        android:src="@android:drawable/ic_menu_day"
+                        android:adjustViewBounds="true"
+                        android:maxHeight="50dp" />
 
                     <TextView
                         android:id="@+id/selectedDateTV"
                         android:layout_width="0dp"
-                        android:layout_height="wrap_content"
+                        android:layout_height="match_parent"
                         android:layout_weight="2"
-                        android:text="Feb 2021"
-                        android:textAlignment="center"
+                        android:text="date"
+                        android:gravity="center"
                         android:textColor="@color/text_primary"
                         android:textSize="20sp" />
 
                     <ImageButton
                         android:id="@+id/datePickerBtn"
                         android:layout_width="0dp"
-                        android:layout_height="match_parent"
+                        android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:background="@null"
                         android:scaleType="fitCenter"
-                        android:src="@android:drawable/ic_menu_today"
-                        android:textColor="@color/text_primary" />
+                        android:background="@null"
+                        android:adjustViewBounds="true"
+                        android:maxHeight="50dp"
+                        android:src="@android:drawable/ic_menu_today" />
 
                 </LinearLayout>
 
@@ -152,7 +156,6 @@
                         android:textColor="@color/text_secondary"
                         android:textSize="16sp" />
 
-
                 </LinearLayout>
 
 
@@ -188,7 +191,7 @@
                     android:layout_height="wrap_content"
                     android:background="@drawable/home_cardview_border">
 
-                    <!-- CircularProgressIndicator for the ring chart -->
+                    <!-- Primo giro -->
                     <com.google.android.material.progressindicator.CircularProgressIndicator
                         android:id="@+id/ringChart"
                         android:layout_width="wrap_content"
@@ -205,6 +208,24 @@
                         app:layout_constraintTop_toTopOf="parent"
                         app:trackColor="#2A2A2A"
                         app:trackThickness="12dp" />
+
+                    <!-- Secondo giro -->
+                    <com.google.android.material.progressindicator.CircularProgressIndicator
+                        android:id="@+id/secondRingChart"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginEnd="16dp"
+                        android:layout_marginBottom="10dp"
+                        android:indeterminate="false"
+                        app:indicatorColor="@color/auth_button_background"
+                        app:indicatorSize="150dp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toStartOf="@+id/detailsLayout"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:trackColor="@android:color/transparent"
+                        app:trackThickness="14dp" />
 
                     <!-- Layout for details (proteins, carbs, fat, target calories) -->
                     <LinearLayout
