@@ -1,19 +1,14 @@
-package com.example.calorietracker
+package com.example.calorietracker.adapters
 
 import android.icu.util.Calendar
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import androidx.lifecycle.findViewTreeLifecycleOwner
-import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
+import com.example.calorietracker.R
 import com.example.calorietracker.database.MealDao
-import com.example.calorietracker.models.MealCategories
 import com.example.calorietracker.models.SelectedDay
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale

@@ -14,6 +14,7 @@ import androidx.navigation.fragment.findNavController
 import com.example.calorietracker.R
 import com.example.calorietracker.api.RetrofitClient
 import com.example.calorietracker.databinding.FragmentRegisterBinding
+import com.example.calorietracker.isInternetAvailable
 import com.example.calorietracker.models.User
 import kotlinx.coroutines.launch
 import org.json.JSONObject
@@ -53,6 +54,11 @@ class RegisterFragment : Fragment() {
 
             lifecycleScope.launch {
                 try{
+                    if(!isInternetAvailable(requireContext())) {
+                        Toast.makeText(requireContext(), "No internet connection", Toast.LENGTH_SHORT).show()
+                        return@launch
+                    }
+
                     val newUser = User(usernameText, emailText, passwordText)
                     val response = RetrofitClient.myAPIService.registerUser(newUser)
                     when (response.code()) {

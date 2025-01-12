@@ -59,6 +59,12 @@ class AddFoodFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        if (!isInternetAvailable(requireContext())) {
+            Toast.makeText(requireContext(), "No internet connection", Toast.LENGTH_SHORT).show()
+            findNavController().popBackStack()
+        }
+
         val localDatabase = LocalDatabase.getInstance(requireContext())
         val mealDao = localDatabase.getMealDao()
 
@@ -178,7 +184,7 @@ class AddFoodFragment : Fragment() {
     private fun getFood(foodId: Long) {
         lifecycleScope.launch(Dispatchers.IO) {
             try {
-                binding.fetchingFoodProgress.visibility = View.VISIBLE
+                withContext(Dispatchers.Main) { binding.fetchingFoodProgress.visibility = View.VISIBLE }
                 val user = FirebaseAuth.getInstance().currentUser
                 val token = user?.getIdToken(false)?.await()?.token
 
@@ -208,28 +214,49 @@ class AddFoodFragment : Fragment() {
                     401 -> {
                         // Unauthorized
                         Log.e(TAG, "Unauthorized request: ${response.errorBody()?.string()}")
-                        Toast.makeText(requireContext(), "Unauthorized request", Toast.LENGTH_SHORT).show()
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(
+                                requireContext(),
+                                "Unauthorized request",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
                     }
                     404 -> {
                         // Forbidden
                         Log.e(TAG, "Forbidden request: ${response.errorBody()?.string()}")
-                        Toast.makeText(requireContext(), "Forbidden request", Toast.LENGTH_SHORT).show()
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(
+                                requireContext(),
+                                "Forbidden request",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
                     }
                     500 -> {
                         // Internal server error
                         Log.e(TAG, "Internal server error: ${response.errorBody()?.string()}")
-                        Toast.makeText(requireContext(), "Internal server error", Toast.LENGTH_SHORT).show()
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(
+                                requireContext(),
+                                "Internal server error",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
                     }
                     else -> {
                         // Unexpected error
                         Log.e(TAG, "Unexpected error: ${response.errorBody()?.string()}")
-                        Toast.makeText(requireContext(), "Unexpected error", Toast.LENGTH_SHORT).show()
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(requireContext(), "Unexpected error", Toast.LENGTH_SHORT)
+                                .show()
+                        }
                     }
                 }
             }catch (e: Exception) {
                 e.printStackTrace()
             }finally {
-                binding.fetchingFoodProgress.visibility = View.GONE
+                withContext(Dispatchers.Main) { binding.fetchingFoodProgress.visibility = View.GONE }
             }
         }
     }

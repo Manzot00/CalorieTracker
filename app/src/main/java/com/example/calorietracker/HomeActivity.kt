@@ -7,8 +7,11 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.icu.util.Calendar
+import android.icu.util.TimeZone
 import android.os.Build
 import android.os.Bundle
+import android.view.View
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
@@ -27,12 +30,22 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import java.util.concurrent.TimeUnit
 
 class HomeActivity : AppCompatActivity() {
+
+    private lateinit var networkMonitor: NetworkMonitor
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_home)
         scheduleWeightWorker()
         setupSyncWorker()
+
+        networkMonitor = NetworkMonitor(this)
+        networkMonitor.startMonitoring()
+        networkMonitor.isConnected.observe(this) { isConnected ->
+            val offlineMessage = findViewById<TextView>(R.id.offlineMessage)
+            offlineMessage.visibility = if (isConnected) View.GONE else View.VISIBLE
+        }
 
         // Controlla e richiedi i permessi per le notifiche
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -108,6 +121,12 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        // Ferma il monitoraggio per evitare perdite di memoria
+        networkMonitor.stopMonitoring()
+    }
+
     private fun scheduleWeightReminder(context: Context, hour: Int, minute: Int) {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val intent = Intent(context, WeightReminderReceiver::class.java).apply {
@@ -152,6 +171,7 @@ class HomeActivity : AppCompatActivity() {
 
     private fun calculateInitialDelay(minute: Int): Long {
         val calendar = Calendar.getInstance().apply {
+            timeZone = TimeZone.GMT_ZONE
             set(Calendar.HOUR_OF_DAY, 0) // Imposta l'orario in cui vuoi eseguire il lavoro
             set(Calendar.MINUTE, minute)
             set(Calendar.SECOND, 0)
@@ -172,7 +192,7 @@ class HomeActivity : AppCompatActivity() {
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()
 
-        val initialDelay = calculateInitialDelay(1) // Calcola il ritardo fino alle 00:01
+        val initialDelay = calculateInitialDelay(0) // Calcola il ritardo fino alle 00:01
 
         val synchronizationWorkRequest = PeriodicWorkRequestBuilder<SynchronizationWorker>(
             1, TimeUnit.DAYS, // Ripeti ogni giorno

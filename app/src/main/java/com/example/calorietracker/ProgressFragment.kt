@@ -1,10 +1,10 @@
 package com.example.calorietracker
 
+import android.app.DatePickerDialog
 import android.graphics.Color
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
-import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -43,6 +43,8 @@ class ProgressFragment : Fragment() {
     private lateinit var localDatabase : LocalDatabase
     private lateinit var mealDao : MealDao
     private lateinit var weightDao : WeightDao
+    private var customStartDate: String? = null
+    private var customEndDate: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -79,6 +81,7 @@ class ProgressFragment : Fragment() {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 calendar.time = Date()
                 val endDate = dateFormatter.format(calendar.time)
+                binding.customRangeTV.visibility = View.GONE
 
                 when (position) {
                     0 -> { // Last 7 days
@@ -108,7 +111,46 @@ class ProgressFragment : Fragment() {
                         updateChart(startDate, endDate)
                     }
                     5 -> { // Custom range
-                        // Apri il date picker qui o gestisci il range personalizzato
+                        // Mostra il primo DatePicker per la data di inizio
+                        val startDatePicker = DatePickerDialog(
+                            requireContext(),
+                            R.style.CustomDatePickerDialogTheme,
+                            { _, startYear, startMonth, startDay ->
+                                customStartDate = String.format("%04d-%02d-%02d", startYear, startMonth + 1, startDay)
+
+                                // Mostra il secondo DatePicker per la data di fine
+                                val endDatePicker = DatePickerDialog(
+                                    requireContext(),
+                                    R.style.CustomDatePickerDialogTheme,
+                                    { _, endYear, endMonth, endDay ->
+                                        customEndDate = String.format("%04d-%02d-%02d", endYear, endMonth + 1, endDay)
+
+                                        // Aggiorna il grafico con il range selezionato
+                                        updateChart(customStartDate!!, customEndDate!!)
+                                        binding.customRangeTV.text = "$customStartDate - $customEndDate"
+                                        binding.customRangeTV.visibility = View.VISIBLE
+                                    },
+                                    calendar.get(Calendar.YEAR),
+                                    calendar.get(Calendar.MONTH),
+                                    calendar.get(Calendar.DAY_OF_MONTH)
+                                )
+                                endDatePicker.setTitle("Select End Date")
+                                endDatePicker.setOnCancelListener {
+                                    // Se l'utente annulla, seleziona l'opzione "Last 7 days"
+                                    binding.timeRangeSpinner.setSelection(0)
+                                }
+                                endDatePicker.show()
+                            },
+                            calendar.get(Calendar.YEAR),
+                            calendar.get(Calendar.MONTH),
+                            calendar.get(Calendar.DAY_OF_MONTH)
+                        )
+                        startDatePicker.setTitle("Select Start Date")
+                        startDatePicker.setOnCancelListener {
+                            // Se l'utente annulla, seleziona l'opzione "Last 7 days"
+                            binding.timeRangeSpinner.setSelection(0)
+                        }
+                        startDatePicker.show()
                     }
                 }
             }
@@ -145,11 +187,10 @@ class ProgressFragment : Fragment() {
                     binding.saveWeightBtn.visibility = View.GONE
                     Toast.makeText(requireContext(), "Weight saved", Toast.LENGTH_SHORT).show()
                     // Aggiorna il grafico dopo aver salvato il peso
-                    val today = dateFormatter.format(Date())
-                    val startDate = binding.timeRangeSpinner.selectedItemPosition.let { position ->
-                        calculateStartDateForRange(position, dateFormatter) // Funzione helper per calcolare la data iniziale
+                    val dates = binding.timeRangeSpinner.selectedItemPosition.let { position ->
+                        calculateStartAndEndDateForRange(position, dateFormatter) // Funzione helper per calcolare la data iniziale
                     }
-                    updateChart(startDate, today)
+                    updateChart(dates.first, dates.second)
                 }
             }
         }
@@ -159,21 +200,6 @@ class ProgressFragment : Fragment() {
         lifecycleScope.launch(Dispatchers.IO) {
             val today = dateFormatter.format(Date())
             val isWeightRecordedForToday = weightDao.isWeightRecorded(today) > 0
-
-            //val yesterday = dateFormatter.format(Calendar.getInstance().apply { add(Calendar.DAY_OF_MONTH, -1) }.time)
-            //val isWeightRecordedForYesterday = weightDao.isWeightRecorded(yesterday) > 0
-
-            /*if (!isWeightRecordedForYesterday) {
-                val weight = weightDao.getLatestWeight()
-                if (weight != null) {
-                    val yesterdayWeight = Weight(
-                        weightId = UUID.randomUUID().toString(),
-                        weight = weight.weight,
-                        date = yesterday
-                    )
-                    weightDao.insertWeight(yesterdayWeight)
-                }
-            }*/
 
             // Aggiorna la visibilità della UI per oggi
             withContext(Dispatchers.Main) {
@@ -305,18 +331,21 @@ class ProgressFragment : Fragment() {
         return weightsData
     }
 
-    private fun calculateStartDateForRange(position: Int, dateFormatter: SimpleDateFormat): String {
+    private fun calculateStartAndEndDateForRange(position: Int, dateFormatter: SimpleDateFormat): Pair<String, String> {
         val calendar = Calendar.getInstance()
 
+        var endDate = dateFormatter.format(calendar.time)
+        var startDate = ""
+        // Calcola la startDate in base al range selezionato
         when (position) {
-            0 -> calendar.add(Calendar.DAY_OF_MONTH, -6) // Ultimi 7 giorni
-            1 -> calendar.add(Calendar.DAY_OF_MONTH, -29) // Ultimi 30 giorni
-            2 -> calendar.add(Calendar.DAY_OF_MONTH, -89) // Ultimi 90 giorni
-            3 -> calendar.add(Calendar.DAY_OF_MONTH, -179) // Ultimi 180 giorni
-            4 -> calendar.add(Calendar.DAY_OF_MONTH, -364) // Ultimi 365 giorni
-            // Puoi aggiungere altri range personalizzati se necessario
+            0 -> { calendar.add(Calendar.DAY_OF_MONTH, -6); startDate = dateFormatter.format(calendar.time) } // Ultimi 7 giorni
+            1 -> { calendar.add(Calendar.DAY_OF_MONTH, -29); startDate = dateFormatter.format(calendar.time) }// Ultimi 30 giorni
+            2 -> { calendar.add(Calendar.DAY_OF_MONTH, -89); startDate = dateFormatter.format(calendar.time) }// Ultimi 90 giorni
+            3 -> { calendar.add(Calendar.DAY_OF_MONTH, -179); startDate = dateFormatter.format(calendar.time) }// Ultimi 180 giorni
+            4 -> { calendar.add(Calendar.DAY_OF_MONTH, -364); startDate = dateFormatter.format(calendar.time) }// Ultimi 365 giorni
+            5 -> { startDate = customStartDate!!; endDate = customEndDate!! }
         }
 
-        return dateFormatter.format(calendar.time)
+        return Pair(startDate, endDate)
     }
 }

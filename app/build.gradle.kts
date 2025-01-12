@@ -52,6 +52,7 @@ dependencies {
     implementation(libs.barcode.scanning)
     implementation(libs.guava)
     implementation(libs.mpandroidchart)
+    implementation(libs.androidx.appcompat)
     val room_version="2.6.1"
     implementation(libs.androidx.room.runtime)
     kapt("androidx.room:room-compiler:$room_version")

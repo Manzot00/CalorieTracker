@@ -4,15 +4,15 @@ import android.app.DatePickerDialog
 import android.content.Context
 import android.icu.util.Calendar
 import android.os.Bundle
-import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.compose.ui.semantics.text
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.calorietracker.adapters.CalendarAdapter
+import com.example.calorietracker.adapters.MealCategoryAdapter
 import com.example.calorietracker.database.LocalDatabase
 import com.example.calorietracker.database.MealDao
 import com.example.calorietracker.databinding.FragmentHomeBinding
@@ -21,7 +21,6 @@ import com.example.calorietracker.models.MealCategories
 import com.example.calorietracker.models.SelectedDay
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -70,6 +69,9 @@ class HomeFragment : Fragment() {
         SelectedDay.selectedDate.observe(viewLifecycleOwner) { newDate ->
             binding.selectedDateTV.text = newDate
 
+            binding.todayBtn.isEnabled =
+                newDate != SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+
             // Calcola la settimana della nuova data
             val newWeek = getWeekDates(newDate)
 
@@ -116,7 +118,7 @@ class HomeFragment : Fragment() {
             openDatePicker(SelectedDay.selectedDate.value ?: "")
         }
 
-        binding.todayBtn.setOnClickListener {
+        binding.todayBtn.setOnClickListener{
             SelectedDay.updateSelectedDate(
                 SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
             )

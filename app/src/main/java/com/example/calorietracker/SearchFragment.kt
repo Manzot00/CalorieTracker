@@ -9,16 +9,18 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.SearchView
 import android.widget.Toast
-import androidx.activity.addCallback
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.calorietracker.adapters.SearchFoodAdapter
 import com.example.calorietracker.api.RetrofitClient
 import com.example.calorietracker.databinding.FragmentSearchBinding
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 
 class SearchFragment : Fragment() {
 
@@ -46,7 +48,7 @@ class SearchFragment : Fragment() {
 
         binding.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
-                if (query != null) {
+                if (query != null ) {
                     searchFoods(query)
                 }
                 return true
@@ -64,6 +66,10 @@ class SearchFragment : Fragment() {
     }
 
     private fun searchFoods(query: String) {
+        if (!isInternetAvailable(requireContext())) {
+            Toast.makeText(requireContext(), "No internet connection", Toast.LENGTH_SHORT).show()
+            return
+        }
         lifecycleScope.launch {
             try {
                 binding.fetchingProgress.visibility = View.VISIBLE
@@ -93,7 +99,9 @@ class SearchFragment : Fragment() {
                     }
                     500 -> {
                         // Internal server error
+                        withContext(Dispatchers.Main) {
                         Toast.makeText(requireContext(), "Internal server error", Toast.LENGTH_SHORT).show()
+                            }
                         Log.e(TAG, "Internal server error: ${response.errorBody()?.string()}")
                     }
                     else -> {
@@ -102,7 +110,10 @@ class SearchFragment : Fragment() {
                 }
 
             }catch (e: Exception) {
-                Toast.makeText(requireContext(), "Error retrieving data", Toast.LENGTH_SHORT).show()
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(requireContext(), "Error retrieving data", Toast.LENGTH_SHORT)
+                        .show()
+                }
                 Log.e(TAG, e.toString())
             }finally {
                 // Nascondi il ProgressBar dopo aver ricevuto la risposta

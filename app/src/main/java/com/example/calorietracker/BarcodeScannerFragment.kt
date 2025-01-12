@@ -7,6 +7,7 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ExperimentalGetImage
@@ -54,6 +55,12 @@ class BarcodeScannerFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        if (!isInternetAvailable(requireContext())) {
+            Toast.makeText(requireContext(), "No internet connection", Toast.LENGTH_SHORT).show()
+            findNavController().popBackStack()
+        }
+
         requestCameraPermission()
     }
 
@@ -108,11 +115,17 @@ class BarcodeScannerFragment : Fragment() {
                         .addOnSuccessListener { barcodes ->
                             for (barcode in barcodes) {
                                 val rawValue = barcode.rawValue
-                                if (!isProcessingBarcode) { // Verifica ancora prima di elaborare
-                                    isProcessingBarcode = true // Imposta lo stato come "in corso"
-                                    val gtin13Code = convertToGTIN13(rawValue!!)
-                                    Log.d("BarcodeScanner", "Barcode detected: $gtin13Code")
-                                    getFoodId(gtin13Code) // Chiama l'API
+                                if (!isProcessingBarcode) {
+                                    isProcessingBarcode = true
+                                    binding.fetchingBarcodeLayout.visibility = View.VISIBLE
+                                    try{
+                                        val gtin13Code = convertToGTIN13(rawValue!!)
+                                        Log.d("BarcodeScanner", "Barcode detected: $gtin13Code")
+                                        getFoodId(gtin13Code) // Chiama l'API
+                                    }catch (e: IllegalArgumentException){
+                                        Toast.makeText(requireContext(), "Retry or check the barcode", Toast.LENGTH_SHORT).show()
+                                        Log.e("BarcodeScanner", "Invalid barcode", e)
+                                    }
                                 }
                             }
                         }
@@ -120,7 +133,7 @@ class BarcodeScannerFragment : Fragment() {
                             Log.e("BarcodeScanner", "Barcode scanning failed", e)
                         }
                         .addOnCompleteListener {
-                            imageProxy.close() // Assicurati di chiudere il frame per evitare memory leaks
+                            imageProxy.close()
                         }
                 }
             }
@@ -187,6 +200,9 @@ class BarcodeScannerFragment : Fragment() {
                 Log.e("BarcodeScanner", "Exception occurred", e)
             }finally {
                 isProcessingBarcode = false // Ripristina lo stato
+                withContext(Dispatchers.Main){
+                    binding.fetchingBarcodeLayout.visibility = View.GONE
+                }
             }
         }
 

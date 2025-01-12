@@ -21,6 +21,7 @@ import com.example.calorietracker.R
 import com.example.calorietracker.api.RetrofitClient
 import com.example.calorietracker.database.LocalDatabase
 import com.example.calorietracker.databinding.FragmentLoginBinding
+import com.example.calorietracker.isInternetAvailable
 import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
@@ -63,6 +64,11 @@ class LoginFragment : Fragment() {
 
             lifecycleScope.launch {
                 try {
+                    if(!isInternetAvailable(requireContext())) {
+                        Toast.makeText(requireContext(), "No internet connection", Toast.LENGTH_SHORT).show()
+                        return@launch
+                    }
+
                     auth.signInWithEmailAndPassword(binding.emailLogin.text.toString(), binding.pwLogin.text.toString()).await()
                     Log.d(TAG, "User logged in successfully")
 

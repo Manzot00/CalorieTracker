@@ -54,16 +54,15 @@
                     android:layout_marginTop="20dp"
                     android:orientation="horizontal">
 
-                    <ImageButton
+                    <Button
                         android:id="@+id/todayBtn"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:background="@null"
-                        android:scaleType="fitCenter"
-                        android:src="@android:drawable/ic_menu_day"
-                        android:adjustViewBounds="true"
-                        android:maxHeight="50dp" />
+                        android:text="Today"
+                        android:textSize="14sp"
+                        android:layout_marginStart="5dp"
+                        android:background="@drawable/app_button_background" />
 
                     <TextView
                         android:id="@+id/selectedDateTV"

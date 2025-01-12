@@ -1,4 +1,4 @@
-package com.example.calorietracker
+package com.example.calorietracker.adapters
 
 import android.view.LayoutInflater
 import android.view.View
@@ -6,6 +6,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.navigation.findNavController
 import androidx.recyclerview.widget.RecyclerView
+import com.example.calorietracker.R
 import com.example.calorietracker.models.FoodSearchResponse
 
 class SearchFoodAdapter(private val data: List<FoodSearchResponse>, private val mealCategory: String) : RecyclerView.Adapter<SearchFoodAdapter.SearchFoodViewHolder>() {
@@ -29,8 +30,14 @@ class SearchFoodAdapter(private val data: List<FoodSearchResponse>, private val 
     }
 
     override fun onBindViewHolder(holder: SearchFoodViewHolder, position: Int) {
-        holder.foodName.text = data[position].food_name
-        holder.foodDescription.text = data[position].food_description
+        val food = data[position]
+        val foodName = if (food.brand_name.isNullOrEmpty()) {
+            food.food_name // Solo il nome del cibo
+        } else {
+            "${food.food_name} (${food.brand_name})" // Nome del cibo e brand
+        }
+        holder.foodName.text = foodName
+        holder.foodDescription.text = food.food_description
     }
 
     override fun getItemCount(): Int {

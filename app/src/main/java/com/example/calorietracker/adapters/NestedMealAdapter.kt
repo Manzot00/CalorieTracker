@@ -1,4 +1,4 @@
-package com.example.calorietracker
+package com.example.calorietracker.adapters
 
 import android.view.LayoutInflater
 import android.view.View
@@ -6,6 +6,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.navigation.findNavController
 import androidx.recyclerview.widget.RecyclerView
+import com.example.calorietracker.R
 import com.example.calorietracker.models.Meal
 
 class NestedMealAdapter(private var meals: MutableList<Meal>) : RecyclerView.Adapter<NestedMealAdapter.MealViewHolder>() {

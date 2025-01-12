@@ -4,7 +4,7 @@ data class FoodDetailResponse(
     val food_id: Long,
     val food_name: String,
     val food_type: String,
-    val food_url: String,
+    //val food_url: String,
     val brand_name: String? = null, // Presente solo se food_type è "Brand"
     val servings: List<Serving>
 )
@@ -12,7 +12,7 @@ data class FoodDetailResponse(
 data class Serving(
     val serving_id: Long,
     val serving_description: String,
-    val serving_url: String,
+    //val serving_url: String,
     val metric_serving_amount: Double?,
     val metric_serving_unit: String?,
     val number_of_units: Double?,

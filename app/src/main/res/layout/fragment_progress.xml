@@ -24,12 +24,12 @@
 
     <Spinner
         android:id="@+id/timeRangeSpinner"
+        style="@style/YourSpinnerStyle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="10dp"
         android:layout_marginTop="20dp"
         android:layout_marginEnd="10dp"
-        style="@style/YourSpinnerStyle"
         android:spinnerMode="dropdown"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -124,5 +124,18 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/weightLineChart"
         app:layout_constraintVertical_bias="0.0" />
+
+    <TextView
+        android:id="@+id/customRangeTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:text="TextView"
+        app:layout_constraintBottom_toBottomOf="@+id/timeRangeSpinner"
+        app:layout_constraintEnd_toEndOf="@+id/timeRangeSpinner"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="@+id/timeRangeSpinner"
+        app:layout_constraintTop_toTopOf="@+id/timeRangeSpinner"
+        app:layout_constraintVertical_bias="0.5" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
