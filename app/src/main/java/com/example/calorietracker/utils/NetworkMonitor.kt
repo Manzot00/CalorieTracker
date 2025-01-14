@@ -1,4 +1,4 @@
-package com.example.calorietracker
+package com.example.calorietracker.utils
 
 import android.content.Context
 import android.net.ConnectivityManager

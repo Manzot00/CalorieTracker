@@ -21,6 +21,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.example.calorietracker.api.RetrofitClient
 import com.example.calorietracker.databinding.FragmentBarcodeScannerBinding
+import com.example.calorietracker.utils.isInternetAvailable
 import com.google.firebase.auth.FirebaseAuth
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
@@ -194,6 +195,9 @@ class BarcodeScannerFragment : Fragment() {
                         navController.navigate(action)
                     }
                 } else {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(requireContext(), "Failed to get food ID", Toast.LENGTH_SHORT).show()
+                    }
                     Log.e("BarcodeScanner", "Failed to get food ID")
                 }
             } catch (e: Exception) {

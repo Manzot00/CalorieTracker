@@ -1,9 +1,6 @@
 package com.example.calorietracker.models
 
-import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.lifecycle.MutableLiveData
-import com.example.calorietracker.database.LocalDatabase
-import com.google.firebase.Timestamp
 
 data class MealCategory(
     val name: String = "",

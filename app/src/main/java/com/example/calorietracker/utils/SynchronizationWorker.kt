@@ -1,4 +1,4 @@
-package com.example.calorietracker
+package com.example.calorietracker.utils
 
 import android.content.Context
 import android.util.Log
@@ -11,9 +11,6 @@ import com.example.calorietracker.database.WeightDao
 import com.example.calorietracker.models.DailyGoals
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.tasks.await
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 class SynchronizationWorker(appContext: Context, workerParams: WorkerParameters) : CoroutineWorker(appContext, workerParams) {
 
@@ -39,6 +36,8 @@ class SynchronizationWorker(appContext: Context, workerParams: WorkerParameters)
             )
         }
 
+        private val userId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+
 
     override suspend fun doWork(): Result {
 
@@ -48,7 +47,7 @@ class SynchronizationWorker(appContext: Context, workerParams: WorkerParameters)
             val userId = user.uid
 
             // Upload meals
-            val meals = mealDao.getAllMeals()
+            val meals = mealDao.getAllMeals(userId)
             if (meals.isNotEmpty()) {
                 val mealResponse = RetrofitClient.myAPIService.uploadMeals(userId, "Bearer $token", meals)
                 if (!mealResponse.isSuccessful) {
@@ -59,7 +58,7 @@ class SynchronizationWorker(appContext: Context, workerParams: WorkerParameters)
             }
 
             // Upload weight
-            val weights = weightDao.getAllWeights()
+            val weights = weightDao.getAllWeights(userId)
             if (weights.isNotEmpty()) {
                 val weightResponse = RetrofitClient.myAPIService.uploadWeight(userId, "Bearer $token", weights)
                 if (!weightResponse.isSuccessful) {

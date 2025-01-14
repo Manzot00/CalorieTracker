@@ -39,7 +39,7 @@
             android:screenOrientation="portrait">
         </activity>
         <receiver
-            android:name=".WeightReminderReceiver"
+            android:name=".utils.WeightReminderReceiver"
             android:enabled="true"
             android:exported="true" />
     </application>

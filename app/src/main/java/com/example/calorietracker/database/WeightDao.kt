@@ -11,8 +11,8 @@ import com.example.calorietracker.models.Weight
 @Dao
 interface WeightDao {
 
-    @Query("SELECT * FROM weights")
-    suspend fun getAllWeights(): List<Weight>
+    @Query("SELECT * FROM weights WHERE userId = :userId")
+    suspend fun getAllWeights(userId: String): List<Weight>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAllWeights(weights: List<Weight>)
@@ -26,13 +26,13 @@ interface WeightDao {
     @Delete
     suspend fun deleteWeight(weight: Weight)
 
-    @Query("SELECT * FROM weights WHERE date = :date")
-    suspend fun getWeightByDate(date: String): List<Weight>
+    @Query("SELECT * FROM weights WHERE date = :date AND userId = :userId")
+    suspend fun getWeightByDate(date: String, userId: String): List<Weight>
 
-    @Query("SELECT COUNT(*) FROM weights WHERE date = :date")
-    suspend fun isWeightRecorded(date: String): Int
+    @Query("SELECT COUNT(*) FROM weights WHERE date = :date AND userId = :userId")
+    suspend fun isWeightRecorded(date: String, userId: String): Int
 
-    @Query("SELECT * FROM weights ORDER BY date DESC LIMIT 1")
-    suspend fun getLatestWeight(): Weight?
+    @Query("SELECT * FROM weights WHERE userId = :userId ORDER BY date DESC LIMIT 1 ")
+    suspend fun getLatestWeight(userId: String): Weight?
 
 }

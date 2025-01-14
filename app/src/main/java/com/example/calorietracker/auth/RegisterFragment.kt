@@ -14,7 +14,7 @@ import androidx.navigation.fragment.findNavController
 import com.example.calorietracker.R
 import com.example.calorietracker.api.RetrofitClient
 import com.example.calorietracker.databinding.FragmentRegisterBinding
-import com.example.calorietracker.isInternetAvailable
+import com.example.calorietracker.utils.isInternetAvailable
 import com.example.calorietracker.models.User
 import kotlinx.coroutines.launch
 import org.json.JSONObject

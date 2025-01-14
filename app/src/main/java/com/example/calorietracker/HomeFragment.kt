@@ -11,14 +11,13 @@ import android.view.ViewGroup
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.calorietracker.adapters.CalendarAdapter
-import com.example.calorietracker.adapters.MealCategoryAdapter
 import com.example.calorietracker.database.LocalDatabase
 import com.example.calorietracker.database.MealDao
 import com.example.calorietracker.databinding.FragmentHomeBinding
 import com.example.calorietracker.models.DailyGoals
 import com.example.calorietracker.models.MealCategories
 import com.example.calorietracker.models.SelectedDay
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -50,6 +49,7 @@ class HomeFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         localDatabase = LocalDatabase.getInstance(requireContext())
         mealDao = localDatabase.getMealDao()
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
 
         // Inizializza con la data corrente se non è impostata
         if (SelectedDay.selectedDate.value.isNullOrEmpty()) {
@@ -87,7 +87,7 @@ class HomeFragment : Fragment() {
             // Aggiorna i pasti relativi alla nuova data
             lifecycleScope.launch(Dispatchers.IO) {
                 MealCategories.clear()
-                mealDao.getMealsByDate(newDate).forEach {
+                mealDao.getMealsByDate(newDate, userId).forEach {
                     MealCategories.addMealToCategory(it.mealCategory, it)
                 }
             }

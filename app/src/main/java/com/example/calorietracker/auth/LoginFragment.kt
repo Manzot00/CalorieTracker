@@ -21,14 +21,16 @@ import com.example.calorietracker.R
 import com.example.calorietracker.api.RetrofitClient
 import com.example.calorietracker.database.LocalDatabase
 import com.example.calorietracker.databinding.FragmentLoginBinding
-import com.example.calorietracker.isInternetAvailable
+import com.example.calorietracker.utils.isInternetAvailable
 import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.FirebaseUser
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 
 
 class LoginFragment : Fragment() {
@@ -125,14 +127,18 @@ class LoginFragment : Fragment() {
     }
 
     private suspend fun fetchAndSaveAllData(){
-        val userId = auth.currentUser?.uid
-        val token = auth.currentUser?.getIdToken(true)?.await()?.token
-        val mealDao = LocalDatabase.getInstance(requireContext()).getMealDao()
-        val weightDao = LocalDatabase.getInstance(requireContext()).getWeightDao()
-        val sharedPreferences = requireContext().getSharedPreferences("daily_goals", Context.MODE_PRIVATE)
-
         try {
-            binding.fetchingDataTV.visibility = View.VISIBLE
+            val userId = auth.currentUser?.uid
+            Log.d(TAG, "User ID: $userId")
+            val token = auth.currentUser?.getIdToken(true)?.await()?.token
+            Log.d(TAG, "Token: $token")
+            val mealDao = LocalDatabase.getInstance(requireContext()).getMealDao()
+            val weightDao = LocalDatabase.getInstance(requireContext()).getWeightDao()
+            val sharedPreferences = requireContext().getSharedPreferences("daily_goals", Context.MODE_PRIVATE)
+
+            withContext(Dispatchers.Main) {
+                binding.fetchingDataTV.visibility = View.VISIBLE
+            }
             // Recupera i dailyGoals
             val dailyGoalsResponse = RetrofitClient.myAPIService.getDailyGoals(userId!!, "Bearer $token")
             if (dailyGoalsResponse.isSuccessful) {
@@ -172,13 +178,17 @@ class LoginFragment : Fragment() {
             } else {
                 throw Exception("Failed to fetch weights: ${weightsResponse.errorBody()?.string()}")
             }
+            navigateToHome()
 
         }catch (e: Exception) {
             Log.e("FetchAndSaveData", "Error fetching and saving data", e)
             Toast.makeText(requireContext(), "Error fetching and saving data", Toast.LENGTH_LONG).show()
+        }finally {
+            withContext(Dispatchers.Main) {
+                binding.fetchingDataTV.visibility = View.GONE
+                binding.loadingBar.visibility = View.GONE
+            }
         }
-        binding.fetchingDataTV.visibility = View.INVISIBLE
-        navigateToHome()
     }
 
     private suspend fun saveUserData(user: FirebaseUser) {

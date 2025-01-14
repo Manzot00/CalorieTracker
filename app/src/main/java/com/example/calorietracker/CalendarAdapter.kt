@@ -1,4 +1,4 @@
-package com.example.calorietracker.adapters
+package com.example.calorietracker
 
 import android.icu.util.Calendar
 import android.view.LayoutInflater
@@ -6,7 +6,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.example.calorietracker.R
 import com.example.calorietracker.database.MealDao
 import com.example.calorietracker.models.SelectedDay
 import java.text.SimpleDateFormat

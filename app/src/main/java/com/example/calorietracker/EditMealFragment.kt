@@ -12,7 +12,6 @@ import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Toast
-import androidx.activity.addCallback
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -25,6 +24,7 @@ import com.example.calorietracker.models.FoodDetailResponse
 import com.example.calorietracker.models.Macro
 import com.example.calorietracker.models.Meal
 import com.example.calorietracker.models.MealCategories
+import com.example.calorietracker.utils.isInternetAvailable
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

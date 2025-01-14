@@ -26,6 +26,10 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import com.example.calorietracker.utils.NetworkMonitor
+import com.example.calorietracker.utils.SynchronizationWorker
+import com.example.calorietracker.utils.WeightReminderReceiver
+import com.example.calorietracker.utils.WeightTrackerWorker
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import java.util.concurrent.TimeUnit
 

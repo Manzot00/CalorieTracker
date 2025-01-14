@@ -13,9 +13,9 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.calorietracker.adapters.SearchFoodAdapter
 import com.example.calorietracker.api.RetrofitClient
 import com.example.calorietracker.databinding.FragmentSearchBinding
+import com.example.calorietracker.utils.isInternetAvailable
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -100,8 +100,8 @@ class SearchFragment : Fragment() {
                     500 -> {
                         // Internal server error
                         withContext(Dispatchers.Main) {
-                        Toast.makeText(requireContext(), "Internal server error", Toast.LENGTH_SHORT).show()
-                            }
+                            Toast.makeText(requireContext(), "Internal server error", Toast.LENGTH_SHORT).show()
+                        }
                         Log.e(TAG, "Internal server error: ${response.errorBody()?.string()}")
                     }
                     else -> {

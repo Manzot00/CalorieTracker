@@ -1,4 +1,4 @@
-package com.example.calorietracker
+package com.example.calorietracker.utils
 
 import android.Manifest
 import android.app.NotificationChannel
@@ -12,7 +12,10 @@ import android.os.Build
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import com.example.calorietracker.HomeActivity
+import com.example.calorietracker.R
 import com.example.calorietracker.database.LocalDatabase
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -20,12 +23,14 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+
 class WeightReminderReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
         val weightDao = LocalDatabase.getInstance(context!!).getWeightDao()
         val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
         CoroutineScope(Dispatchers.IO).launch {
-            val isRecorded = weightDao.isWeightRecorded(today) > 0
+            val isRecorded = weightDao.isWeightRecorded(today, userId) > 0
             if (!isRecorded) {
                 sendNotification(context)
             }

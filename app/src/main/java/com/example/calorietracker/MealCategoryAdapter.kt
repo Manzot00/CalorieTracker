@@ -1,4 +1,4 @@
-package com.example.calorietracker.adapters
+package com.example.calorietracker
 
 import android.util.Log
 import android.view.View
@@ -14,7 +14,6 @@ import androidx.core.view.isVisible
 import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.navigation.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.calorietracker.R
 
 class MealCategoryAdapter (private val data: List<MealCategory>) : RecyclerView.Adapter<MealCategoryAdapter.CategoryViewHolder>() {
 

@@ -1,4 +1,4 @@
-package com.example.calorietracker
+package com.example.calorietracker.utils
 
 import android.content.Context
 import androidx.work.CoroutineWorker
@@ -19,29 +19,29 @@ class WeightTrackerWorker(appContext: Context, workerParams: WorkerParameters) :
         LocalDatabase.getInstance(appContext).getWeightDao()
     }
 
+    private val userId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+
     override suspend fun doWork(): Result {
         val dateFormatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-        val today = dateFormatter.format(Date())
         val calendar = Calendar.getInstance()
 
         // Controlla se il peso di ieri è registrato
         calendar.add(Calendar.DAY_OF_MONTH, -1)
         var currentDate = dateFormatter.format(calendar.time)
 
-        while (weightDao.isWeightRecorded(currentDate) == 0) {
-            val latestWeight = weightDao.getLatestWeight()
-            if (latestWeight != null) {
-                // Registra il peso mancante
-                val missingWeight = Weight(
-                    weightId = UUID.randomUUID().toString(),
-                    weight = latestWeight.weight,
-                    date = currentDate,
-                    userId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
-                )
-                weightDao.insertWeight(missingWeight)
-            } else {
-                break // Esci se non ci sono dati di peso precedenti
-            }
+        // Ottieni l'ultimo peso registrato (non importa la data)
+        val latestWeight = weightDao.getLatestWeight(userId)
+            ?: return Result.success() // Nessun peso disponibile, nulla da fare
+
+        // Scorri indietro nel tempo per registrare i pesi mancanti
+        while (weightDao.isWeightRecorded(currentDate, userId) == 0) {
+            val missingWeight = Weight(
+                weightId = UUID.randomUUID().toString(),
+                weight = latestWeight.weight, // Usa l'ultimo peso registrato
+                date = currentDate, // Data mancante
+                userId = userId
+            )
+            weightDao.insertWeight(missingWeight)
 
             // Passa alla data precedente
             calendar.add(Calendar.DAY_OF_MONTH, -1)

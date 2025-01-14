@@ -45,6 +45,7 @@ class ProgressFragment : Fragment() {
     private lateinit var weightDao : WeightDao
     private var customStartDate: String? = null
     private var customEndDate: String? = null
+    private val userId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -199,7 +200,7 @@ class ProgressFragment : Fragment() {
     private fun visualizeWeightTracker(dateFormatter: SimpleDateFormat) {
         lifecycleScope.launch(Dispatchers.IO) {
             val today = dateFormatter.format(Date())
-            val isWeightRecordedForToday = weightDao.isWeightRecorded(today) > 0
+            val isWeightRecordedForToday = weightDao.isWeightRecorded(today, userId) > 0
 
             // Aggiorna la visibilità della UI per oggi
             withContext(Dispatchers.Main) {
@@ -292,7 +293,7 @@ class ProgressFragment : Fragment() {
                 val currentDate = dateFormatter.format(calendar.time)
 
                 val calories = withContext(Dispatchers.IO) {
-                    mealDao.getMealsByDate(currentDate).sumOf { it.macros.calories?.toInt() ?: 0 }
+                    mealDao.getMealsByDate(currentDate, userId).sumOf { it.macros.calories?.toInt() ?: 0 }
                 }
 
                 caloriesData.add(Pair(currentDate, calories))
@@ -321,7 +322,7 @@ class ProgressFragment : Fragment() {
                 val currentDate = dateFormatter.format(calendar.time)
 
                 val weight = withContext(Dispatchers.IO) {
-                    weightDao.getWeightByDate(currentDate).firstOrNull()?.weight ?: 0.0
+                    weightDao.getWeightByDate(currentDate, userId).firstOrNull()?.weight ?: 0.0
                 }
                 weightsData.add(Pair(currentDate, weight))
                 // Sposta la data al giorno successivo
